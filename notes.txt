@@ -1,3 +1,12 @@
+refer to:
+/Users/MJ/Development/pokemon-scraper-web-0615
+
+https://github.com/learn-co-students/lectures-and-videos-web-615/blob/master/student-scrape/scrape.rb
+
+
+
+
+
 Airnav urls:
 
 an airport:
