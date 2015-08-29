@@ -4,9 +4,11 @@ require 'open-uri'
 
 #Testing Data:
 # get_places from country -> 153 seconds
+# getting state level data: Elapsed time: 38.631141 (2015-08-28-20:38)
+# getting all data with rescue Elapsed time: 1174.189964
 
 class AirNavScraper
-  attr_reader :airports
+  attr_accessor :airports
 
   MAIN_URL = "http://www.airnav.com"
 
@@ -14,41 +16,43 @@ class AirNavScraper
     @airports = {}
   end
 
-  def get_countries
-    html = open("http://www.airnav.com/airports/browse.html").read
-    doc = Nokogiri::HTML(html)
-    country_urls = build_hrefs(doc)
+  def collect_urls
+    country_urls = get_places("http://www.airnav.com/airports/browse.html")
+
     country_urls.each do |country_url|
-      country_code = /..$/.match(country_url).to_s
-      @airports[country_code] = get_places(country_url)
-    end   
+      country_code = place_abbreviation(country_url)
+      states_or_airports = get_places(country_url)
+
+      if airport?(states_or_airports.first)
+        airports[country_code] = get_places(country_url)
+      else
+        airports[country_code] = {}
+        states_or_airports.each do |state_url|
+          state = place_abbreviation(state_url)
+          airports[country_code][state] = get_places(state_url)
+        end
+      end
+
+    end
   end
 
   def get_places(containing_place_url)
-    html = open(containing_place_url).read
-    doc = Nokogiri::HTML(html)
-    place_urls = build_hrefs(doc)
+    begin
+      html = open(containing_place_url).read
+      doc = Nokogiri::HTML(html)
+      place_urls = build_hrefs(doc)
+    rescue Net::ReadTimeout
+      nil
+    end
   end
 
+  def airport?(url)
+    /.*airport\/.*/.match(url) != nil
+  end
 
-
-
-# REPLACED!!!!!
-  #   def get_states(country_url)
-  #   html = open(country_url).read
-  #   doc = Nokogiri::HTML(html)
-  #   states_or_airports = build_hrefs(doc)
-
-  #   # if /.*airports.*/.match(states_or_airports.first)
-  #   #   # There is a list of states for this country.
-  #   #   # Get the links to the states and proceed to the airports
-  #   #   states_or_airports.each do |state|
-  #   #     get_airports(state)
-  #   #   end
-  #   # else # Country without states.  Go directly to airports
-  #   #   get_airports(country_url)
-  #   # end
-  # end
+  def place_abbreviation(url)
+    /..$/.match(url).to_s.upcase
+  end
 
   private
   def build_hrefs(doc)
@@ -66,7 +70,8 @@ scrape = AirNavScraper.new
 # scrape.get_states("http://www.airnav.com/airports/us")
 # puts scrape.get_states("http://www.airnav.com/airports/fm").class
 # puts scrape.get_countries
-scrape.get_countries
-puts scrape.airports
+# scrape.collect_urls
+# puts scrape.airports
+puts scrape.get_places("http://www.airnav.com/airports/us/AK")
 end_time = Time.new
 puts "Elapsed time: #{end_time - start_time}"
