@@ -1,10 +1,12 @@
 require 'pry'
 require 'nokogiri'
 require 'open-uri'
-require 'pry'
 
+#Testing Data:
+# get_places from country -> 153 seconds
 
 class AirNavScraper
+  attr_reader :airports
 
   MAIN_URL = "http://www.airnav.com"
 
@@ -17,34 +19,36 @@ class AirNavScraper
     doc = Nokogiri::HTML(html)
     country_urls = build_hrefs(doc)
     country_urls.each do |country_url|
-      get_states(country_url)
+      country_code = /..$/.match(country_url).to_s
+      @airports[country_code] = get_places(country_url)
     end   
   end
 
-  def get_states(country_url)
-    html = open(country_url).read
+  def get_places(containing_place_url)
+    html = open(containing_place_url).read
     doc = Nokogiri::HTML(html)
-    states_or_airports = build_hrefs(doc)
-
-    if /.*airports.*/.match(states_or_airports.first)
-      # There is a list of states for this country.
-      # Get the links to the states and proceed to the airports
-      states_or_airports.each do |state|
-        get_airports(state)
-      end
-    else # Country without states.  Go directly to airports
-      get_airports(country_url)
-    end
+    place_urls = build_hrefs(doc)
   end
 
-  def get_airports(state_url)
-    html = open(state_url).read
-    doc = Nokogiri::HTML(html)
-    airport_urls = build_hrefs(doc)
-    binding.pry
-    # take the last letters of the state_url as a key and build an array of all
-    # the airport urls as a value
-  end
+
+
+
+# REPLACED!!!!!
+  #   def get_states(country_url)
+  #   html = open(country_url).read
+  #   doc = Nokogiri::HTML(html)
+  #   states_or_airports = build_hrefs(doc)
+
+  #   # if /.*airports.*/.match(states_or_airports.first)
+  #   #   # There is a list of states for this country.
+  #   #   # Get the links to the states and proceed to the airports
+  #   #   states_or_airports.each do |state|
+  #   #     get_airports(state)
+  #   #   end
+  #   # else # Country without states.  Go directly to airports
+  #   #   get_airports(country_url)
+  #   # end
+  # end
 
   private
   def build_hrefs(doc)
@@ -54,9 +58,15 @@ class AirNavScraper
 
 end
 
+start_time = Time.now
 scrape = AirNavScraper.new
 # scrape.scrape_all_countries
 # scrape.scrape_us_index
 # scrape.scrape_airports("http://www.airnav.com/airports/us/AL")
 # scrape.get_states("http://www.airnav.com/airports/us")
-puts scrape.get_states("http://www.airnav.com/airports/fm")
+# puts scrape.get_states("http://www.airnav.com/airports/fm").class
+# puts scrape.get_countries
+scrape.get_countries
+puts scrape.airports
+end_time = Time.new
+puts "Elapsed time: #{end_time - start_time}"
