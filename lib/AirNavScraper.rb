@@ -62,6 +62,8 @@ class AirNavScraper
 
 end
 
+
+
 start_time = Time.now
 scrape = AirNavScraper.new
 # scrape.scrape_all_countries
@@ -72,6 +74,8 @@ scrape = AirNavScraper.new
 # puts scrape.get_countries
 # scrape.collect_urls
 # puts scrape.airports
-puts scrape.get_places("http://www.airnav.com/airports/us/AK")
+# puts scrape.get_places("http://www.airnav.com/airports/us/AK")
+
+
 end_time = Time.new
 puts "Elapsed time: #{end_time - start_time}"
