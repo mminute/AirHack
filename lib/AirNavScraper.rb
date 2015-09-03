@@ -72,9 +72,9 @@ scrape = AirNavScraper.new
 # scrape.get_states("http://www.airnav.com/airports/us")
 # puts scrape.get_states("http://www.airnav.com/airports/fm").class
 # puts scrape.get_countries
-# scrape.collect_urls
+scrape.collect_urls
 # puts scrape.airports
-# puts scrape.get_places("http://www.airnav.com/airports/us/AK")
+#puts scrape.get_places("http://www.airnav.com/airports/us/MN")
 
 
 end_time = Time.new
