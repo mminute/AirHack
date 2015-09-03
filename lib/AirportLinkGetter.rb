@@ -2,12 +2,7 @@ require 'pry'
 require 'nokogiri'
 require 'open-uri'
 
-#Testing Data:
-# get_places from country -> 153 seconds
-# getting state level data: Elapsed time: 38.631141 (2015-08-28-20:38)
-# getting all data with rescue Elapsed time: 1174.189964
-
-class AirNavScraper
+class AirportLinkGetter
   attr_accessor :airports
 
   MAIN_URL = "http://www.airnav.com"
@@ -63,19 +58,6 @@ class AirNavScraper
 end
 
 
-
-start_time = Time.now
-scrape = AirNavScraper.new
-# scrape.scrape_all_countries
-# scrape.scrape_us_index
-# scrape.scrape_airports("http://www.airnav.com/airports/us/AL")
-# scrape.get_states("http://www.airnav.com/airports/us")
-# puts scrape.get_states("http://www.airnav.com/airports/fm").class
-# puts scrape.get_countries
+scrape = AirportLinkGetter.new
 scrape.collect_urls
-# puts scrape.airports
-#puts scrape.get_places("http://www.airnav.com/airports/us/MN")
-
-
-end_time = Time.new
-puts "Elapsed time: #{end_time - start_time}"
+puts scrape.airports
