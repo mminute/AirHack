@@ -82,7 +82,19 @@ class AirportInfoScraper
   end
 
   def taf
-    
+    taf_data = doc.search("[text()*='TAF']").last.parent.next_element.children.first.children[1].children[1..-2]
+
+    {}.tap do |collector|
+      taf_data.each do |row|
+        if row.children.first
+          collector[taf_airport(row)] = taf_content(row)
+        end
+      end
+    end
+  end
+
+  def notam
+    doc.search("[text()*='TAF']")
   end
 
   # Helper Methods
@@ -98,6 +110,14 @@ class AirportInfoScraper
     row.css('td font')[1].content.gsub("\n", "").gsub("$", "").strip
   end
 
+  def taf_airport(row)
+    row.children.first.children.first.children.first.children.first.content
+  end
+
+  def taf_content(row)
+    row.children.last.children.last.children.first.content.gsub(" \n", "")
+  end
+
 end
 
 scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
@@ -105,9 +125,10 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.vfr_map
 # p scraper.airport_diagram
 # p scraper.airport_diagram_pdf_link
-p scraper.sunrise_sunset
+# p scraper.sunrise_sunset
 # p scraper.current_date_and_time
-p scraper.metar
+# p scraper.metar
+p scraper.taf
 
 
 
