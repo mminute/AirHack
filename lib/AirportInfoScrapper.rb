@@ -94,7 +94,7 @@ class AirportInfoScraper
   end
 
   def notam
-    doc.search("[text()*='TAF']")
+    doc.search("[text()*='NOTAMs']")[2].parent.attributes['href'].content
   end
 
   # Helper Methods
@@ -128,7 +128,8 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.sunrise_sunset
 # p scraper.current_date_and_time
 # p scraper.metar
-p scraper.taf
+# p scraper.taf
+p scraper.notam
 
 
 
