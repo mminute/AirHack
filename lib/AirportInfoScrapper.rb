@@ -71,10 +71,31 @@ class AirportInfoScraper
     }
   end
 
+  def metar
+    metar_data = doc.search("[text()*='METAR']").first.parent.parent.css('tr')[2..-1]
+
+    {}.tap do |collector|
+      metar_data.each do |row|
+        collector[metar_airport(row)] = metar_content(row)
+      end
+    end
+  end
+
+  def taf
+    
+  end
 
   # Helper Methods
-  def sunrise_sunset_content(doc)
-    doc.children.first.children.first.content
+  def sunrise_sunset_content(info)
+    info.children.first.children.first.content
+  end
+
+  def metar_airport(row)
+    row.css('td font').first.children.first.children.first.content
+  end
+
+  def metar_content(row)
+    row.css('td font')[1].content.gsub("\n", "").gsub("$", "").strip
   end
 
 end
@@ -84,8 +105,9 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.vfr_map
 # p scraper.airport_diagram
 # p scraper.airport_diagram_pdf_link
-# p scraper.sunrise_sunset
+p scraper.sunrise_sunset
 # p scraper.current_date_and_time
+p scraper.metar
 
 
 
