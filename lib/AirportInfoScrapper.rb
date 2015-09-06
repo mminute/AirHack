@@ -12,8 +12,23 @@ class AirportInfoScraper
     @doc = Nokogiri::HTML(html)
   end
 
-  def latitude_longitude
-    doc.search("[text()*='Lat/Long']").first.parent.children[1].content
+  def location
+    location_info = doc.search("[text()*='Location']").first.next_element.css('tr')[1..-1]
+    {}.tap do |location_info_hash|
+      location_info.each do |row|
+        if row.children[1].children.count > 1
+          attribute_value = [].tap do |attribute_values|
+                                row.children[1].children.each do |child|
+                                  attribute_values << child.content unless child.content == ""
+                                end
+                              end
+        else
+          attribute_value = row.children[1].children.first.content
+        end
+
+        location_info_hash[location_attribute(row)] = attribute_value
+      end
+    end
   end
 
   def vfr_map
@@ -74,9 +89,9 @@ class AirportInfoScraper
   def metar
     metar_data = doc.search("[text()*='METAR']").first.parent.parent.css('tr')[2..-1]
 
-    {}.tap do |collector|
+    {}.tap do |metar_data_hash|
       metar_data.each do |row|
-        collector[metar_airport(row)] = metar_content(row)
+        metar_data_hash[metar_airport(row)] = metar_content(row)
       end
     end
   end
@@ -84,10 +99,10 @@ class AirportInfoScraper
   def taf
     taf_data = doc.search("[text()*='TAF']").last.parent.next_element.children.first.children[1].children[1..-2]
 
-    {}.tap do |collector|
+    {}.tap do |taf_data_hash|
       taf_data.each do |row|
         if row.children.first
-          collector[taf_airport(row)] = taf_content(row)
+          taf_data_hash[taf_airport(row)] = taf_content(row)
         end
       end
     end
@@ -98,6 +113,10 @@ class AirportInfoScraper
   end
 
   # Helper Methods
+  def location_attribute(row)
+    row.children.first.children.first.content[0..-2]
+  end
+
   def sunrise_sunset_content(info)
     info.children.first.children.first.content
   end
@@ -129,8 +148,8 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.current_date_and_time
 # p scraper.metar
 # p scraper.taf
-p scraper.notam
-
+# p scraper.notam
+p scraper.location
 
 
 
