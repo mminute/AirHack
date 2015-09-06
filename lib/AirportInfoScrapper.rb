@@ -39,7 +39,6 @@ class AirportInfoScraper
 
   def airport_comms
     begin
-      # comms_info_table = doc.search("[text()*='Airport Communications']").first.next_element
       comms_info_table = table_selector("'Airport Communications'")
       comms_info_rows  = comms_info_table.children[1..-2]
       
@@ -66,7 +65,22 @@ class AirportInfoScraper
   end
 
   def vor
-    table_selector("'Nearby radio navigation aids'").children[1..-2]
+    begin
+      vor_data = table_selector("'Nearby radio navigation aids'").children[2..-2]
+      {}.tap do |vor_info_hash|
+        vor_data.each do |row|
+          if row.children.count > 0
+            vor_info_hash[vor_key(row)] = vor_value(row)
+          end
+        end
+      end
+    rescue
+      nil
+    end
+  end
+
+  def non_directional_beacon
+    
   end
 
   def vfr_map
@@ -184,6 +198,32 @@ class AirportInfoScraper
 
   def airport_comms_value(row)
     row.children.last.children.first.content
+  end
+
+  def vor_key(row)
+    row.children.first.children.first.children.first.content
+  end
+
+  def vor_value(row)
+    {
+      vor_name: vor_property(row,2),
+      vor_link: vor_link(row),
+      vor_radial_distance: vor_radial_distance(row),
+      vor_freq: vor_property(row,4),
+      vor_var: vor_property(row,6)
+    }
+  end
+
+  def vor_property(row,idx)
+    row.children[idx].children.first.content
+  end
+
+  def vor_radial_distance(row)
+    row.children.first.children[1].content.sub(" ", "")
+  end
+
+  def vor_link(row)
+    row.children.first.children.first.attributes['href'].value
   end
 
   def sunrise_sunset_content(info)
