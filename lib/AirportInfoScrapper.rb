@@ -17,16 +17,22 @@ class AirportInfoScraper
     {}.tap do |location_info_hash|
       location_info.each do |row|
         if row.children[1].children.count > 1
-          attribute_value = [].tap do |attribute_values|
-                                row.children[1].children.each do |child|
-                                  attribute_values << child.content unless child.content == ""
-                                end
-                              end
+          attribute_value = location_lat_long_values(row)
         else
           attribute_value = row.children[1].children.first.content
         end
-
         location_info_hash[location_attribute(row)] = attribute_value
+      end
+    end
+  end
+
+  def airport_operations
+    ops_info = doc.search("[text()*='Airport Operations']").first.next_element.children[1..-2]
+    {}.tap do |ops_info_hash|
+      ops_info.each do |row|
+          if row.children.count > 1
+            ops_info_hash[airport_operations_key(row)] = airport_operations_value(row)
+          end
       end
     end
   end
@@ -117,6 +123,29 @@ class AirportInfoScraper
     row.children.first.children.first.content[0..-2]
   end
 
+  def location_lat_long_values(row)
+    [].tap do |values_array|
+      row.children[1].children.each do |child|
+        values_array << child.content unless child.content == ""
+      end
+    end
+  end
+
+  def airport_operations_key(row)
+    row.children.first.children.first.content[0..-2]
+  end
+
+  def airport_operations_value(row)
+    if row.children[1].children.count > 1
+      entries = row.children[1].children.map do |property|
+                  property.content.strip
+                end
+      entries.delete_if{|item| item == ""}
+    else
+      row.children[1].children.first.content
+    end
+  end
+
   def sunrise_sunset_content(info)
     info.children.first.children.first.content
   end
@@ -149,8 +178,8 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.metar
 # p scraper.taf
 # p scraper.notam
-p scraper.location
-
+# p scraper.location
+p scraper.airport_operations
 
 
 
