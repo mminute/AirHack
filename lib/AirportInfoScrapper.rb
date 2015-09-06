@@ -87,6 +87,10 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.sunrise_sunset
 # p scraper.current_date_and_time
 
+
+
+
+
 # scraper2 = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
 # p scraper2.latitude_longitude
 
