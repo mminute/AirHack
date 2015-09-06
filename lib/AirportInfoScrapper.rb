@@ -37,6 +37,34 @@ class AirportInfoScraper
     end
   end
 
+  def airport_comms
+    begin
+      
+      comms_info_table = doc.search("[text()*='Airport Communications']").first.next_element
+      comms_info_rows  = comms_info_table.children[1..-2]
+      
+      comms_info = {}.tap do |comms_info_hash|
+        comms_info_rows.each do |row|
+          if row.children.first
+            comms_info_hash[airport_comms_key(row)] = airport_comms_value(row)
+          end
+        end
+      end
+
+      if comms_info_table.next_element.name == "ul"
+        comms_info['Notes'] = [].tap do |all_notes|
+          comms_info_table.next_element.children.css('li').each do |item|
+            all_notes << item.children.first.content.gsub("\n", "")
+          end
+        end
+        comms_info
+      end
+
+    rescue
+      nil
+    end
+  end
+
   def vfr_map
     begin
       doc.search("[text()*='Sectional chart']")[1].parent.parent.css("img").first.attributes['src'].value
@@ -146,6 +174,14 @@ class AirportInfoScraper
     end
   end
 
+  def airport_comms_key(row)
+    row.children.first.children.first.content[0..-2]
+  end
+
+  def airport_comms_value(row)
+    row.children.last.children.first.content
+  end
+
   def sunrise_sunset_content(info)
     info.children.first.children.first.content
   end
@@ -168,7 +204,7 @@ class AirportInfoScraper
 
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
+scraper = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
 # p scraper.latitude_longitude
 # p scraper.vfr_map
 # p scraper.airport_diagram
@@ -179,7 +215,8 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.taf
 # p scraper.notam
 # p scraper.location
-p scraper.airport_operations
+# p scraper.airport_operations
+p scraper.airport_comms
 
 
 
