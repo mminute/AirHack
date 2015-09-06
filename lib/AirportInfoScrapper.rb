@@ -29,7 +29,7 @@ class AirportInfoScraper
     {}.tap do |ops_info_hash|
       ops_info.each do |row|
           if row.children.count > 1
-            ops_info_hash[airport_operations_key(row)] = airport_operations_value(row)
+            ops_info_hash[info_key(row)] = airport_operations_value(row)
           end
       end
     end
@@ -43,7 +43,7 @@ class AirportInfoScraper
       comms_info = {}.tap do |comms_info_hash|
         comms_info_rows.each do |row|
           if row.children.first
-            comms_info_hash[airport_comms_key(row)] = airport_comms_value(row)
+            comms_info_hash[info_key(row)] = info_value(row)
           end
         end
       end
@@ -78,14 +78,35 @@ class AirportInfoScraper
   end
 
   def non_directional_beacon
-    ndb_rows = doc.search("[text()*='NDB']").first.parent.parent.children[3..-2]
+    begin
+      ndb_rows = doc.search("[text()*='NDB']").first.parent.parent.children[3..-2]
 
-    {}.tap do |ndb_info_hash|
-      ndb_rows.each do |row|
-        if row.children.count > 0
-          ndb_info_hash[non_directional_beacon_name(row)] = non_directional_beacon_value(row)
+      {}.tap do |ndb_info_hash|
+        ndb_rows.each do |row|
+          if row.children.count > 0
+            ndb_info_hash[non_directional_beacon_name(row)] = non_directional_beacon_value(row)
+          end
         end
       end
+
+    rescue
+      nil
+    end
+  end
+
+  def airport_services
+    begin
+      services_rows = table_selector("'Airport Services'").children[1..-2]
+      {}.tap do |service_hash|
+        services_rows.each do |row|
+          if row.children.count > 0
+            service_hash[info_key(row)] = info_value(row)
+          end
+        end
+      end
+
+    rescue
+      nil
     end
   end
 
@@ -183,7 +204,7 @@ class AirportInfoScraper
     end
   end
 
-  def airport_operations_key(row)
+  def info_key(row)
     row.children.first.children.first.content[0..-2]
   end
 
@@ -198,11 +219,7 @@ class AirportInfoScraper
     end
   end
 
-  def airport_comms_key(row)
-    row.children.first.children.first.content[0..-2]
-  end
-
-  def airport_comms_value(row)
+  def info_value(row)
     row.children.last.children.first.content
   end
 
@@ -212,15 +229,15 @@ class AirportInfoScraper
 
   def vor_value(row)
     {
-      vor_name: vor_property(row,2),
-      vor_link: vor_link(row),
+      vor_name: navigation_property(row,2),
+      vor_link: navigation_link(row),
       vor_radial_distance: vor_radial_distance(row),
-      vor_freq: vor_property(row,4),
-      vor_var: vor_property(row,6)
+      vor_freq: navigation_property(row,4),
+      vor_var: navigation_property(row,6)
     }
   end
 
-  def vor_property(row,idx)
+  def navigation_property(row,idx)
     row.children[idx].children.first.content
   end
 
@@ -228,11 +245,9 @@ class AirportInfoScraper
     row.children.first.children[1].content.sub(" ", "")
   end
 
-  def vor_link(row)
-    row.children.first.children.first.attributes['href'].value
+  def navigation_link(row)
+    "www.airnav.com" + row.children.first.children.first.attributes['href'].value
   end
-
-  alias_method :non_directional_beacon_property, :vor_property
 
   def non_directional_beacon_name(row)
     row.children.first.children.first.children.first.content
@@ -240,10 +255,11 @@ class AirportInfoScraper
 
   def non_directional_beacon_value(row)
     {
-      ndb_heading_distance: non_directional_beacon_property(row,2),
-      ndb_feq: non_directional_beacon_property(row,4),
-      ndb_var: non_directional_beacon_property(row,6),
-      ndb_id: non_directional_beacon_property(row,8),
+      ndb_link: navigation_link(row),
+      ndb_heading_distance: navigation_property(row,2),
+      ndb_feq: navigation_property(row,4),
+      ndb_var: navigation_property(row,6),
+      ndb_id: navigation_property(row,8),
       ndb_morse_code: non_directional_beacon_morse_code(row)
     }
   end
@@ -293,7 +309,8 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.airport_comms
 # p scraper.table_selector("'Airport Communications'")
 # p scraper.vor
-p scraper.non_directional_beacon
+# p scraper.non_directional_beacon
+p scraper.airport_services
 
 
 # scraper2 = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
