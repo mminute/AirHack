@@ -13,7 +13,7 @@ class AirportInfoScraper
   end
 
   def location
-    location_info = doc.search("[text()*='Location']").first.next_element.css('tr')[1..-1]
+    location_info = table_selector("'Location'").css('tr')[1..-1]
     {}.tap do |location_info_hash|
       location_info.each do |row|
         if row.children[1].children.count > 1
@@ -27,7 +27,7 @@ class AirportInfoScraper
   end
 
   def airport_operations
-    ops_info = doc.search("[text()*='Airport Operations']").first.next_element.children[1..-2]
+    ops_info = table_selector("'Airport Operations'").children[1..-2]
     {}.tap do |ops_info_hash|
       ops_info.each do |row|
           if row.children.count > 1
@@ -39,8 +39,8 @@ class AirportInfoScraper
 
   def airport_comms
     begin
-      
-      comms_info_table = doc.search("[text()*='Airport Communications']").first.next_element
+      # comms_info_table = doc.search("[text()*='Airport Communications']").first.next_element
+      comms_info_table = table_selector("'Airport Communications'")
       comms_info_rows  = comms_info_table.children[1..-2]
       
       comms_info = {}.tap do |comms_info_hash|
@@ -65,6 +65,10 @@ class AirportInfoScraper
     end
   end
 
+  def vor
+    table_selector("'Nearby radio navigation aids'").children[1..-2]
+  end
+
   def vfr_map
     begin
       doc.search("[text()*='Sectional chart']")[1].parent.parent.css("img").first.attributes['src'].value
@@ -75,7 +79,7 @@ class AirportInfoScraper
 
   def airport_diagram
     begin
-      doc.search("[text()*='CAUTION: Diagram may not be current']").first.next_element.next_element.attributes['src'].value[2..-1]
+      table_selector("'CAUTION: Diagram may not be current'").next_element.attributes['src'].value[2..-1]
     rescue
       nil
     end
@@ -202,9 +206,13 @@ class AirportInfoScraper
     row.children.last.children.last.children.first.content.gsub(" \n", "")
   end
 
+  def table_selector(search)
+    doc.search("[text()*=#{search}]").first.next_element
+  end
+
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
+scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.latitude_longitude
 # p scraper.vfr_map
 # p scraper.airport_diagram
@@ -216,8 +224,9 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
 # p scraper.notam
 # p scraper.location
 # p scraper.airport_operations
-p scraper.airport_comms
-
+# p scraper.airport_comms
+# p scraper.table_selector("'Airport Communications'")
+p scraper.vor
 
 
 # scraper2 = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
