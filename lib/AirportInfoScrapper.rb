@@ -2,8 +2,6 @@ require 'pry'
 require 'nokogiri'
 require 'open-uri'
 
-
-
 class AirportInfoScraper
   attr_reader :doc
 
@@ -80,7 +78,15 @@ class AirportInfoScraper
   end
 
   def non_directional_beacon
-    
+    ndb_rows = doc.search("[text()*='NDB']").first.parent.parent.children[3..-2]
+
+    {}.tap do |ndb_info_hash|
+      ndb_rows.each do |row|
+        if row.children.count > 0
+          ndb_info_hash[non_directional_beacon_name(row)] = non_directional_beacon_value(row)
+        end
+      end
+    end
   end
 
   def vfr_map
@@ -226,6 +232,26 @@ class AirportInfoScraper
     row.children.first.children.first.attributes['href'].value
   end
 
+  alias_method :non_directional_beacon_property, :vor_property
+
+  def non_directional_beacon_name(row)
+    row.children.first.children.first.children.first.content
+  end
+
+  def non_directional_beacon_value(row)
+    {
+      ndb_heading_distance: non_directional_beacon_property(row,2),
+      ndb_feq: non_directional_beacon_property(row,4),
+      ndb_var: non_directional_beacon_property(row,6),
+      ndb_id: non_directional_beacon_property(row,8),
+      ndb_morse_code: non_directional_beacon_morse_code(row)
+    }
+  end
+
+  def non_directional_beacon_morse_code(row)
+    row.children[9].children.last.content
+  end
+
   def sunrise_sunset_content(info)
     info.children.first.children.first.content
   end
@@ -266,7 +292,8 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.airport_operations
 # p scraper.airport_comms
 # p scraper.table_selector("'Airport Communications'")
-p scraper.vor
+# p scraper.vor
+p scraper.non_directional_beacon
 
 
 # scraper2 = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
