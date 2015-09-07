@@ -144,6 +144,35 @@ class AirportInfoScraper
     create_info_hash(ownership_rows, &hash_contents_processor)
   end
 
+  def airport_ops_stats
+    begin
+      table_data = table_selector("'Airport Operational Statistics'").css('td tr td')
+      clean_data = table_data.children.map{|datum| datum.content}.delete_if{|item| /^\xC2\xA0$|\*/.match(item) }
+      time_period = table_data.css('font').children.last.content
+
+      {}.tap do |info_hash|
+        i=0
+        while i <= clean_data[0..-2].count-1
+          if /Aircraft operations/.match(clean_data[i])
+            split_entry = clean_data[i].split(": ")
+            info_hash[ split_entry[0]+":" ] = split_entry[1]
+            i+=1
+          else
+            if clean_data[i][0..-1].to_i > 0
+              info_hash[ clean_data[i+1] ] = clean_data[i]
+            else
+              info_hash[ clean_data[i] ] = clean_data[i+1]
+            end
+            i+=2
+          end
+        end
+        info_hash["Time Period"] = time_period
+      end
+    rescue
+      nil
+    end
+  end
+
   def vfr_map
     begin
       doc.search("[text()*='Sectional chart']")[1].parent.parent.css("img").first.attributes['src'].value
@@ -347,7 +376,7 @@ class AirportInfoScraper
 
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
+scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.latitude_longitude
 # p scraper.vfr_map
 # p scraper.airport_diagram
@@ -366,6 +395,7 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
 # p scraper.airport_services
 # p scraper.runway_info
 # p scraper.airport_ownership
+p scraper.airport_ops_stats
 
 
 # scraper2 = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
