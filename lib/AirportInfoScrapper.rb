@@ -205,6 +205,38 @@ class AirportInfoScraper
     end
   end
 
+  def nearby_airports_with_instrument_approaches
+    search_results = doc.search("[text()*='nearby airports with instrument procedures:']")
+
+    if search_results.count > 0
+      current_line = search_results.first.next_element
+
+      {}.tap do |info_hash|
+        while true
+          if current_line.nil? == false
+            airport_link = "www.airnav.com" + current_line.attributes['href'].value
+            airport_id = current_line.children.first.content
+            airport_name = current_line.next_sibling.text[3..-1]
+            info_hash[ airport_id ] = { link: airport_link, name: airport_name }
+          else
+            break
+          end
+          current_line = nearby_airport_ia_next_line(current_line)
+        end
+      end
+    end
+  end
+
+  def other_pages
+    current_table = table_selector("'Other Pages'")
+    [].tap do |info_hash|
+      while current_table.name == 'table'
+        info_hash << other_page_link(current_table)
+        current_table = current_table.next_element
+      end
+    end
+  end
+
   def vfr_map
     begin
       doc.search("[text()*='Sectional chart']")[1].parent.parent.css("img").first.attributes['src'].value
@@ -398,6 +430,19 @@ class AirportInfoScraper
     procedures_section.children.last.children[idx]
   end
 
+  def nearby_airport_ia_next_line(current_line)
+    current_line.next_sibling.next_sibling.next_sibling.next_element
+  end
+
+  def other_page_link(current_table)
+    link_text = current_table.css('tr').first.children.css('td').last.children.last.children.text
+    if link_text[-3..-1] == "..."
+      link_text[0..-4]
+    else
+      link_text
+    end
+  end
+
   def sunrise_sunset_content(info)
     info.children.first.children.first.content
   end
@@ -424,7 +469,7 @@ class AirportInfoScraper
 
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kpne")
+scraper = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
 # p scraper.latitude_longitude
 # p scraper.vfr_map
 # p scraper.airport_diagram
@@ -445,7 +490,9 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kpne")
 # p scraper.airport_ownership
 # p scraper.airport_ops_stats
 # p scraper.additional_remarks
-p scraper.instrument_procedures
+# p scraper.instrument_procedures
+# p scraper.nearby_airports_with_instrument_approaches
+p scraper.other_pages
 
 # scraper2 = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
 # p scraper2.latitude_longitude
