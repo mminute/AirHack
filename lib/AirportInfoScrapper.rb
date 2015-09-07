@@ -78,10 +78,24 @@ class AirportInfoScraper
     end
   end
 
+  def create_info_hash(rows, &block)
+    {}.tap do |info_hash|
+      rows.each do |row|
+        block.call(row, info_hash)
+      end
+    end
+  end
+
   def non_directional_beacon
     begin
       ndb_rows = doc.search("[text()*='NDB']").first.parent.parent.children[3..-2]
 
+      # hash_contents = Proc.new do |row,info_hash|
+      #                           if row.children.count > 0
+      #                             info_hash[non_directional_beacon_name(row)] = non_directional_beacon_value(row)
+      #                           end
+      #                         end
+      # create_info_hash(ndb_rows, &hash_contents)
       {}.tap do |ndb_info_hash|
         ndb_rows.each do |row|
           if row.children.count > 0
@@ -113,22 +127,22 @@ class AirportInfoScraper
 
   def runway_info
     runway_name_element = doc.search("[text()*='Runway Information']").first.next_element
-
-    runway_collector = {}
     found_runway = true
-    
-    while found_runway
-      runway_info_table = runway_name_element.next_element
-      runway_rows = runway_info_table.children[1..-2]
-      runway_collector[runway_name_element.content] = runway_info_value(runway_rows)
 
-      if more_runway_tables?(runway_info_table)
-        runway_name_element = runway_info_table.next_element
-      else
-        found_runway = false
+    {}.tap do |runway_collector|
+      while found_runway
+        runway_info_table = runway_name_element.next_element
+        runway_rows = runway_info_table.children[1..-2]
+        runway_collector[runway_name_element.content] = runway_info_value(runway_rows)
+
+        if more_runway_tables?(runway_info_table)
+          runway_name_element = runway_info_table.next_element
+        else
+          found_runway = false
+        end
       end
     end
-    runway_collector
+
   end
 
   def vfr_map
@@ -332,7 +346,7 @@ class AirportInfoScraper
 
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
+scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.latitude_longitude
 # p scraper.vfr_map
 # p scraper.airport_diagram
@@ -347,7 +361,7 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
 # p scraper.airport_comms
 # p scraper.table_selector("'Airport Communications'")
 # p scraper.vor
-# p scraper.non_directional_beacon
+p scraper.non_directional_beacon
 # p scraper.airport_services
 # p scraper.runway_info
 
