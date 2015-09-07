@@ -173,6 +173,18 @@ class AirportInfoScraper
     end
   end
 
+  def additional_remarks
+    remarks_rows = table_selector("'Additional Remarks'").children[1..-2]
+
+    [].tap do |collector|
+      remarks_rows.each do |row|
+        if row.children.count > 0
+          collector << info_value(row)
+        end
+      end
+    end
+  end
+
   def vfr_map
     begin
       doc.search("[text()*='Sectional chart']")[1].parent.parent.css("img").first.attributes['src'].value
@@ -395,7 +407,8 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.airport_services
 # p scraper.runway_info
 # p scraper.airport_ownership
-p scraper.airport_ops_stats
+# p scraper.airport_ops_stats
+p scraper.additional_remarks
 
 
 # scraper2 = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
