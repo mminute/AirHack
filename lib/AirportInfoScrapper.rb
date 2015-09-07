@@ -126,7 +126,22 @@ class AirportInfoScraper
         end
       end
     end
+  end
 
+  def airport_ownership
+    ownership_rows = table_selector("'Airport Ownership'").children[1..-2]
+
+    hash_contents_processor = Proc.new do |row,info_hash|
+                if row.children.count > 0
+                  ownership_values = [].tap do |data|
+                                        row.children.last.children.each do |datum|
+                                          data << datum.content
+                                        end
+                                     end
+                  info_hash[info_key(row)] = ownership_values.delete_if{|i| i == ""}
+                end
+              end
+    create_info_hash(ownership_rows, &hash_contents_processor)
   end
 
   def vfr_map
@@ -332,7 +347,7 @@ class AirportInfoScraper
 
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
+scraper = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
 # p scraper.latitude_longitude
 # p scraper.vfr_map
 # p scraper.airport_diagram
@@ -350,6 +365,7 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.non_directional_beacon
 # p scraper.airport_services
 # p scraper.runway_info
+# p scraper.airport_ownership
 
 
 # scraper2 = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
