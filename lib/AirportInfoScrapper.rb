@@ -291,16 +291,15 @@ class AirportInfoScraper
   end
 
   def runway_info_value(rows)
-    {}.tap do |runway_info_hash|
-      rows.each do |row|
-        if row.children.count > 0 && row.children.first.children.first != nil
-          runway_data = row.children.last.children.first
-          runway_info_hash[ info_key(row) ] = if row.children.last.children.count > 0
-                                                runway_data.content
-                                              end
-        end
-      end
-    end
+    hash_contents_processor = Proc.new do |row,info_hash|
+                              if row.children.count > 0 && row.children.first.children.first != nil
+                                runway_data = row.children.last.children.first
+                                info_hash[ info_key(row) ] = if row.children.last.children.count > 0
+                                                                      runway_data.content
+                                                                    end
+                              end
+                            end
+    create_info_hash(rows, &hash_contents_processor)
   end
 
   def more_runway_tables?(runway_info)
@@ -341,7 +340,7 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.sunrise_sunset
 # p scraper.current_date_and_time
 # p scraper.metar
-p scraper.taf
+# p scraper.taf
 # p scraper.notam
 # p scraper.location
 # p scraper.airport_operations
