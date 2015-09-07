@@ -13,41 +13,41 @@ class AirportInfoScraper
 
   def location
     location_info = table_selector("'Location'").css('tr')[1..-1]
-    {}.tap do |location_info_hash|
-      location_info.each do |row|
-        if row.children[1].children.count > 1
-          attribute_value = location_lat_long_values(row)
-        else
-          attribute_value = row.children[1].children.first.content
-        end
-        location_info_hash[location_attribute(row)] = attribute_value
-      end
-    end
+
+    hash_contents_processor = Proc.new do |row,info_hash|
+                          if row.children[1].children.count > 1
+                            attribute_value = location_lat_long_values(row)
+                          else
+                            attribute_value = row.children[1].children.first.content
+                          end
+                          info_hash[location_attribute(row)] = attribute_value
+                        end
+
+    create_info_hash(location_info, &hash_contents_processor)
   end
 
   def airport_operations
-    ops_info = table_selector("'Airport Operations'").children[1..-2]
-    {}.tap do |ops_info_hash|
-      ops_info.each do |row|
-          if row.children.count > 1
-            ops_info_hash[info_key(row)] = airport_operations_value(row)
-          end
-      end
-    end
+    ops_info_rows = table_selector("'Airport Operations'").children[1..-2]
+
+    hash_contents_processor = Proc.new do |row,info_hash|
+                          if row.children.count > 1
+                            info_hash[info_key(row)] = airport_operations_value(row)
+                          end
+                        end
+    create_info_hash(ops_info_rows, &hash_contents_processor)
   end
 
   def airport_comms
     begin
       comms_info_table = table_selector("'Airport Communications'")
       comms_info_rows  = comms_info_table.children[1..-2]
-      
-      comms_info = {}.tap do |comms_info_hash|
-        comms_info_rows.each do |row|
-          if row.children.first
-            comms_info_hash[info_key(row)] = info_value(row)
-          end
-        end
-      end
+
+      hash_contents_processor = Proc.new do |row,info_hash|
+                            if row.children.first
+                              info_hash[info_key(row)] = info_value(row)
+                            end
+                          end
+      comms_info = create_info_hash(comms_info_rows, &hash_contents_processor)
 
       if comms_info_table.next_element.name == "ul"
         comms_info['Notes'] = [].tap do |all_notes|
@@ -65,24 +65,16 @@ class AirportInfoScraper
 
   def vor
     begin
-      vor_data = table_selector("'Nearby radio navigation aids'").children[2..-2]
-      {}.tap do |vor_info_hash|
-        vor_data.each do |row|
-          if row.children.count > 0
-            vor_info_hash[vor_key(row)] = vor_value(row)
-          end
-        end
-      end
+      vor_data_rows = table_selector("'Nearby radio navigation aids'").children[2..-2]
+
+      hash_contents_processor = Proc.new do |row,info_hash|
+                              if row.children.count > 0
+                                info_hash[vor_key(row)] = vor_value(row)
+                              end
+                            end
+      create_info_hash(vor_data_rows, &hash_contents_processor)
     rescue
       nil
-    end
-  end
-
-  def create_info_hash(rows, &block)
-    {}.tap do |info_hash|
-      rows.each do |row|
-        block.call(row, info_hash)
-      end
     end
   end
 
@@ -90,20 +82,13 @@ class AirportInfoScraper
     begin
       ndb_rows = doc.search("[text()*='NDB']").first.parent.parent.children[3..-2]
 
-      # hash_contents = Proc.new do |row,info_hash|
-      #                           if row.children.count > 0
-      #                             info_hash[non_directional_beacon_name(row)] = non_directional_beacon_value(row)
-      #                           end
-      #                         end
-      # create_info_hash(ndb_rows, &hash_contents)
-      {}.tap do |ndb_info_hash|
-        ndb_rows.each do |row|
-          if row.children.count > 0
-            ndb_info_hash[non_directional_beacon_name(row)] = non_directional_beacon_value(row)
-          end
-        end
-      end
+      hash_contents_processor = Proc.new do |row,info_hash|
+                                if row.children.count > 0
+                                  info_hash[non_directional_beacon_name(row)] = non_directional_beacon_value(row)
+                                end
+                              end
 
+      create_info_hash(ndb_rows, &hash_contents_processor)
     rescue
       nil
     end
@@ -112,14 +97,13 @@ class AirportInfoScraper
   def airport_services
     begin
       services_rows = table_selector("'Airport Services'").children[1..-2]
-      {}.tap do |service_hash|
-        services_rows.each do |row|
-          if row.children.count > 0
-            service_hash[info_key(row)] = info_value(row)
-          end
-        end
-      end
 
+      hash_contents_processor = Proc.new do |row,info_hash|
+                      if row.children.count > 0
+                        info_hash[info_key(row)] = info_value(row)
+                      end
+                    end
+      create_info_hash(services_rows, &hash_contents_processor)
     rescue
       nil
     end
@@ -201,25 +185,20 @@ class AirportInfoScraper
   end
 
   def metar
-    metar_data = doc.search("[text()*='METAR']").first.parent.parent.css('tr')[2..-1]
-
-    {}.tap do |metar_data_hash|
-      metar_data.each do |row|
-        metar_data_hash[metar_airport(row)] = metar_content(row)
-      end
-    end
+    metar_data_rows = doc.search("[text()*='METAR']").first.parent.parent.css('tr')[2..-1]
+    hash_contents_processor = Proc.new{|row,info_hash| info_hash[metar_airport(row)] = metar_content(row) }
+    create_info_hash(metar_data_rows, &hash_contents_processor)
   end
 
   def taf
-    taf_data = doc.search("[text()*='TAF']").last.parent.next_element.children.first.children[1].children[1..-2]
+    taf_data_rows = doc.search("[text()*='TAF']").last.parent.next_element.children.first.children[1].children[1..-2]
 
-    {}.tap do |taf_data_hash|
-      taf_data.each do |row|
-        if row.children.first
-          taf_data_hash[taf_airport(row)] = taf_content(row)
-        end
-      end
-    end
+    hash_contents_processor = Proc.new do |row,info_hash|
+                            if row.children.first
+                              info_hash[taf_airport(row)] = taf_content(row)
+                            end
+                          end
+    create_info_hash(taf_data_rows, &hash_contents_processor)
   end
 
   def notam
@@ -227,6 +206,14 @@ class AirportInfoScraper
   end
 
   # Helper Methods
+  def create_info_hash(rows, &hash_contents_processor)
+    {}.tap do |info_hash|
+      rows.each do |row|
+        hash_contents_processor.call(row, info_hash)
+      end
+    end
+  end
+
   def location_attribute(row)
     row.children.first.children.first.content[0..-2]
   end
@@ -354,14 +341,14 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.sunrise_sunset
 # p scraper.current_date_and_time
 # p scraper.metar
-# p scraper.taf
+p scraper.taf
 # p scraper.notam
 # p scraper.location
 # p scraper.airport_operations
 # p scraper.airport_comms
 # p scraper.table_selector("'Airport Communications'")
 # p scraper.vor
-p scraper.non_directional_beacon
+# p scraper.non_directional_beacon
 # p scraper.airport_services
 # p scraper.runway_info
 
