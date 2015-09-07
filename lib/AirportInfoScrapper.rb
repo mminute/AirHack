@@ -1,6 +1,7 @@
 require 'pry'
 require 'nokogiri'
 require 'open-uri'
+require 'pry'
 
 class AirportInfoScraper
   attr_reader :doc
@@ -108,6 +109,26 @@ class AirportInfoScraper
     rescue
       nil
     end
+  end
+
+  def runway_info
+    runway_name_element = doc.search("[text()*='Runway Information']").first.next_element
+
+    runway_collector = {}
+    found_runway = true
+    
+    while found_runway
+      runway_info_table = runway_name_element.next_element
+      runway_rows = runway_info_table.children[1..-2]
+      runway_collector[runway_name_element.content] = runway_info_value(runway_rows)
+
+      if more_runway_tables?(runway_info_table)
+        runway_name_element = runway_info_table.next_element
+      else
+        found_runway = false
+      end
+    end
+    runway_collector
   end
 
   def vfr_map
@@ -268,6 +289,23 @@ class AirportInfoScraper
     row.children[9].children.last.content
   end
 
+  def runway_info_value(rows)
+    {}.tap do |runway_info_hash|
+      rows.each do |row|
+        if row.children.count > 0 && row.children.first.children.first != nil
+          runway_data = row.children.last.children.first
+          runway_info_hash[ info_key(row) ] = if row.children.last.children.count > 0
+                                                runway_data.content
+                                              end
+        end
+      end
+    end
+  end
+
+  def more_runway_tables?(runway_info)
+    /Runway/.match(runway_info.next_element.content) && runway_info.next_element.next_element.name == 'table'
+  end
+
   def sunrise_sunset_content(info)
     info.children.first.children.first.content
   end
@@ -294,7 +332,7 @@ class AirportInfoScraper
 
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
+scraper = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
 # p scraper.latitude_longitude
 # p scraper.vfr_map
 # p scraper.airport_diagram
@@ -310,7 +348,8 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.table_selector("'Airport Communications'")
 # p scraper.vor
 # p scraper.non_directional_beacon
-p scraper.airport_services
+# p scraper.airport_services
+# p scraper.runway_info
 
 
 # scraper2 = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
