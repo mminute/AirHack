@@ -185,6 +185,26 @@ class AirportInfoScraper
     end
   end
 
+  def instrument_procedures
+    procedures_section = table_selector("'Instrument Procedures'")
+    procedures_rows = procedures_section.next_element.css('tr')
+
+    {}.tap do |info_hash|
+      section_title = nil
+      procedures_rows.each do |row|
+        if row.children.first.name == 'th'
+          section_title = row.children.first.children.last.content
+          info_hash[ section_title ] = {}
+        else
+          info_hash[ section_title ][ instrument_approach_name(row) ] = instrument_approach_link(row)
+        end
+      end
+      if info_hash.keys.count > 0
+        info_hash[ :warning ] = instrument_procedures_warning_text(procedures_section)
+      end
+    end
+  end
+
   def vfr_map
     begin
       doc.search("[text()*='Sectional chart']")[1].parent.parent.css("img").first.attributes['src'].value
@@ -362,6 +382,22 @@ class AirportInfoScraper
     /Runway/.match(runway_info.next_element.content) && runway_info.next_element.next_element.name == 'table'
   end
 
+  def instrument_approach_name(row)
+    row.children[1..-1].first.children.first.content
+  end
+
+  def instrument_approach_link(row)
+    row.children[1..-1].children[2].attributes['href'].value[8..-1]
+  end
+
+  def instrument_procedures_warning_text(procedures_section)
+      warning_text(procedures_section,0).children.first.content + warning_text(procedures_section, 1).content + " " + warning_text(procedures_section, 3).content
+  end
+
+  def warning_text(procedures_section, idx)
+    procedures_section.children.last.children[idx]
+  end
+
   def sunrise_sunset_content(info)
     info.children.first.children.first.content
   end
@@ -388,7 +424,7 @@ class AirportInfoScraper
 
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
+scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kpne")
 # p scraper.latitude_longitude
 # p scraper.vfr_map
 # p scraper.airport_diagram
@@ -408,8 +444,8 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/KPNE")
 # p scraper.runway_info
 # p scraper.airport_ownership
 # p scraper.airport_ops_stats
-p scraper.additional_remarks
-
+# p scraper.additional_remarks
+p scraper.instrument_procedures
 
 # scraper2 = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
 # p scraper2.latitude_longitude
