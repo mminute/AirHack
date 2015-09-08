@@ -229,10 +229,33 @@ class AirportInfoScraper
 
   def other_pages
     current_table = table_selector("'Other Pages'")
-    [].tap do |info_hash|
+    [].tap do |info|
       while current_table.name == 'table'
-        info_hash << other_page_link(current_table)
+        info << other_page_link(current_table)
         current_table = current_table.next_element
+      end
+    end
+  end
+
+  def where_to_stay
+    where_to_stay_search = doc.search("[text()*='Where to Stay']")
+    if where_to_stay_search.count > 0
+      hotel_links = where_to_stay_search.first.parent.parent.next_element.next_element.next_element.css('tr td a')
+      return_hash = Hash.new { |hash, key| hash[key] = { } }
+
+      return_hash.tap do |info_hash|
+        hotel_links.each do |link_element|
+          hotel_link = hotel_link(link_element)
+          hotel_name = link_element.children.first.text
+          if hotel_link[41].to_i > 0
+            distance = hotel_distance(link_element)
+            hotel_price = hotel_price_for(link_element)
+            info_hash[ :hotels_nearby ][ hotel_name ] = { distance: distance, link: hotel_link, price: hotel_price }
+          else
+            hotel_count = number_of_hotels_in(link_element)
+            info_hash[ :nearby_cities_hotels ][ hotel_name ] = { link: hotel_link, count: hotel_count }
+          end
+        end
       end
     end
   end
@@ -443,6 +466,22 @@ class AirportInfoScraper
     end
   end
 
+  def hotel_link(link_element)
+    "http://www.airnav.com" + link_element.attributes['href'].value
+  end
+
+  def hotel_distance(link_element)
+    link_element.parent.next_element.next_element.css('font').children.first.text.delete("\xC2\xA0").to_f
+  end
+
+  def hotel_price_for(link_element)
+    link_element.parent.next_element.next_element.next_element.children.first.children.text
+  end
+
+  def number_of_hotels_in(link_element)
+    link_element.parent.previous_element.children.first.text.split("").delete_if{|i| i.to_i == 0}.join.to_i
+  end
+
   def sunrise_sunset_content(info)
     info.children.first.children.first.content
   end
@@ -492,7 +531,8 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
 # p scraper.additional_remarks
 # p scraper.instrument_procedures
 # p scraper.nearby_airports_with_instrument_approaches
-p scraper.other_pages
+# p scraper.other_pages
+p scraper.where_to_stay
 
 # scraper2 = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
 # p scraper2.latitude_longitude
