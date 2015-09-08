@@ -247,7 +247,7 @@ class AirportInfoScraper
         hotel_links.each do |link_element|
           hotel_link = hotel_link(link_element)
           hotel_name = link_element.children.first.text
-          if hotel_link[41].to_i > 0
+          if hotel?(hotel_link, hotel_name)
             distance = hotel_distance(link_element)
             hotel_price = hotel_price_for(link_element)
             info_hash[ :hotels_nearby ][ hotel_name ] = { distance: distance, link: hotel_link, price: hotel_price }
@@ -258,6 +258,10 @@ class AirportInfoScraper
         end
       end
     end
+  end
+
+  def aviation_businesses
+    doc.search("[text()*='Where to Stay']")
   end
 
   def vfr_map
@@ -470,6 +474,11 @@ class AirportInfoScraper
     "http://www.airnav.com" + link_element.attributes['href'].value
   end
 
+  def hotel?(hotel_link, hotel_name)
+    link_text = hotel_name.split(",").map{|part| part.strip.upcase.gsub(" ","+")}.join(",")
+    !hotel_link.include?(link_text)
+  end
+
   def hotel_distance(link_element)
     link_element.parent.next_element.next_element.css('font').children.first.text.delete("\xC2\xA0").to_f
   end
@@ -508,7 +517,7 @@ class AirportInfoScraper
 
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
+scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kpne")
 # p scraper.latitude_longitude
 # p scraper.vfr_map
 # p scraper.airport_diagram
@@ -533,6 +542,9 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
 # p scraper.nearby_airports_with_instrument_approaches
 # p scraper.other_pages
 p scraper.where_to_stay
+# p scraper.hotel?("http://www.airnav.com/reserve/hotel?in=CHERRY+HILL,NJ,US&near=KPNE", "Cherry Hill, NJ")
+ 
+# p scraper.
 
 # scraper2 = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
 # p scraper2.latitude_longitude
