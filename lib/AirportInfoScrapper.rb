@@ -315,6 +315,19 @@ class AirportInfoScraper
     end
   end
 
+  def aerial_photo
+    begin
+      image = doc.search("[text()*='Aerial photo']").first.parent.next_element.css('img').first.attributes['src'].value
+      if image.include?("no-airport-photo")
+        nil
+      else
+        image
+      end
+    rescue
+      nil
+    end
+  end
+
   def sunrise_sunset
     sunset_sunrise_data = doc.search("[text()*='Morning civil twilight']").first.parent.parent
 
@@ -651,7 +664,7 @@ class AirportInfoScraper
 
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kdxr")
+scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kpne")
 # p scraper.latitude_longitude
 # p scraper.vfr_map
 # p scraper.airport_diagram
@@ -678,7 +691,8 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kdxr")
 # p scraper.where_to_stay
 # p scraper.hotel?("http://www.airnav.com/reserve/hotel?in=CHERRY+HILL,NJ,US&near=KPNE", "Cherry Hill, NJ")
 # p scraper.aviation_businesses
-p scraper.fixed_base_operators
+# p scraper.fixed_base_operators
+p scraper.aerial_photo
 
 # http://www.airnav.com/airport/KDXR
 # scraper2 = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
