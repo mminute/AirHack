@@ -260,34 +260,48 @@ class AirportInfoScraper
     end
   end
 
-# Ignore this section of info????????
-  # def aviation_businesses
-  #   current_row = doc.search("[text()*='Aviation Businesses']").first.parent.parent.next_element.next_element
+  def aviation_businesses
+    begin
+      first_row = first_business_entry("'Aviation Businesses'")
 
-  #   [].tap do |row_collector|
-  #     while true
-  #       if current_row.css('th').count > 0
-  #         break
-  #       else
-  #         row_collector << current_row.children.css('td a')
-  #         current_row = current_row.next_element
-  #       end
-  #     end
-  #   end[0]
-  # end
+      terminator = Proc.new do |row|
+        end_of_av_biz_list?(row)
+      end
+
+      av_biz_entries = airport_biz_rows(first_row, &terminator)
+
+      hash_contents_processor = Proc.new do |row,info_hash|
+          info_hash[ airport_biz_name(row) ] = { contact_info: airport_biz_comms(row), description: airport_biz_description(row), distance: distance_to_biz(row) }
+      end
+
+      create_info_hash(av_biz_entries, &hash_contents_processor)
+    rescue
+      nil
+    end
+  end
 
   def fixed_base_operators
     begin
-      first_row = doc.search("[text()*='FBO, Fuel Providers, and Aircraft Ground Support']").first.parent.parent.next_element.next_element
+      first_row = first_business_entry("'FBO, Fuel Providers, and Aircraft Ground Support'")
 
-      fbo_entries = fbo_rows(first_row)
+      terminator = Proc.new do |row|
+        end_of_fbo_list?(row)
+      end
+
+      fbo_entries = airport_biz_rows(first_row, &terminator)
 
       hash_contents_processor = Proc.new do |row,info_hash|
-          info_hash[ fbo_name(row) ] = { contact_info: fbo_comms(row), fuel: fbo_fuel(row) }
+          info_hash[ airport_biz_name(row) ] = { contact_info: airport_biz_comms(row), fuel: fbo_fuel(row) }
       end
       create_info_hash(fbo_entries, &hash_contents_processor)
     rescue
       nil
+    end
+  end
+
+  def airport_business(search_term)
+    if search_term == "'FBO, Fuel Providers, and Aircraft Ground Support'"
+    elsif search_term == "'Aviation Businesses'"
     end
   end
 
@@ -535,13 +549,13 @@ class AirportInfoScraper
     link_element.parent.previous_element.children.first.text.split("").delete_if{|i| i.to_i == 0}.join.to_i
   end
 
-  def fbo_rows(row)
-    fbo_entries = [].tap do |collector|
+  def airport_biz_rows(row, &terminator)
+    [].tap do |collector|
       while true
-        if is_this_an_fbo?(row)
+        if is_this_an_airport_biz?(row)
           collector << row
           row = row.next_element
-        elsif end_of_fbo_list?(row)
+        elsif terminator.call(row)
           break
         else
           if row == nil
@@ -554,23 +568,31 @@ class AirportInfoScraper
     end
   end
 
-  def is_this_an_fbo?(current_row)
+  def end_of_av_biz_list?(row)
     begin
-      fbo_name(current_row)
+      row.text == "\xC2\xA0"
     rescue
       false
     end
   end
 
-  def fbo_name(current_row)
+  def is_this_an_airport_biz?(current_row)
+    begin
+      airport_biz_name(current_row)
+    rescue
+      false
+    end
+  end
+
+  def airport_biz_name(current_row)
     if current_row.children[1].children.text.strip.delete("\xC2\xA0") == ""
-      name = current_row.children[1].children.last.children.first.attributes['alt'].value
+      current_row.children[1].children.last.children.first.attributes['alt'].value
     else
       current_row.children[1].children.text.strip.delete("\xC2\xA0")
     end
   end
 
-  def fbo_comms(current_row)
+  def airport_biz_comms(current_row)
     return_hash = Hash.new { |hash, key| hash[key] = [ ] }
 
     return_hash.tap do |info_hash|
@@ -586,6 +608,14 @@ class AirportInfoScraper
         end
       end
     end
+  end
+
+  def airport_biz_description(row)
+    row.children[9].children.text.delete("\n").delete("\xC2\xA0").strip
+  end
+
+  def distance_to_biz(row)
+    row.children[13].text
   end
 
   def website_or_email?(item)
@@ -662,9 +692,13 @@ class AirportInfoScraper
     doc.search("[text()*=#{search}]").first.next_element
   end
 
+  def first_business_entry(search)
+    doc.search("[text()*=#{search}]").first.parent.parent.next_element.next_element
+  end
+
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kpne")
+scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kdxr")
 # p scraper.latitude_longitude
 # p scraper.vfr_map
 # p scraper.airport_diagram
@@ -690,9 +724,9 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kpne")
 # p scraper.other_pages
 # p scraper.where_to_stay
 # p scraper.hotel?("http://www.airnav.com/reserve/hotel?in=CHERRY+HILL,NJ,US&near=KPNE", "Cherry Hill, NJ")
-# p scraper.aviation_businesses
+p scraper.aviation_businesses
 # p scraper.fixed_base_operators
-p scraper.aerial_photo
+# p scraper.aerial_photo
 
 # http://www.airnav.com/airport/KDXR
 # scraper2 = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
