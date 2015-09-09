@@ -214,7 +214,7 @@ class AirportInfoScraper
       {}.tap do |info_hash|
         while true
           if current_line.nil? == false
-            airport_link = "www.airnav.com" + current_line.attributes['href'].value
+            airport_link = link_prefixer(current_line.attributes['href'].value)
             airport_id = current_line.children.first.content
             airport_name = current_line.next_sibling.text[3..-1]
             info_hash[ airport_id ] = { link: airport_link, name: airport_name }
@@ -260,8 +260,35 @@ class AirportInfoScraper
     end
   end
 
-  def aviation_businesses
-    doc.search("[text()*='Where to Stay']")
+# Ignore this section of info????????
+  # def aviation_businesses
+  #   current_row = doc.search("[text()*='Aviation Businesses']").first.parent.parent.next_element.next_element
+
+  #   [].tap do |row_collector|
+  #     while true
+  #       if current_row.css('th').count > 0
+  #         break
+  #       else
+  #         row_collector << current_row.children.css('td a')
+  #         current_row = current_row.next_element
+  #       end
+  #     end
+  #   end[0]
+  # end
+
+  def fixed_base_operators
+    begin
+      first_row = doc.search("[text()*='FBO, Fuel Providers, and Aircraft Ground Support']").first.parent.parent.next_element.next_element
+
+      fbo_entries = fbo_rows(first_row)
+
+      hash_contents_processor = Proc.new do |row,info_hash|
+          info_hash[ fbo_name(row) ] = { contact_info: fbo_comms(row), fuel: fbo_fuel(row) }
+      end
+      create_info_hash(fbo_entries, &hash_contents_processor)
+    rescue
+      nil
+    end
   end
 
   def vfr_map
@@ -349,6 +376,10 @@ class AirportInfoScraper
     end
   end
 
+  def link_prefixer(suffix)
+    "http://www.airnav.com" + suffix
+  end
+
   def location_attribute(row)
     row.children.first.children.first.content[0..-2]
   end
@@ -403,7 +434,7 @@ class AirportInfoScraper
   end
 
   def navigation_link(row)
-    "www.airnav.com" + row.children.first.children.first.attributes['href'].value
+    link_prefixer( row.children.first.children.first.attributes['href'].value )
   end
 
   def non_directional_beacon_name(row)
@@ -471,7 +502,7 @@ class AirportInfoScraper
   end
 
   def hotel_link(link_element)
-    "http://www.airnav.com" + link_element.attributes['href'].value
+    link_prefixer( link_element.attributes['href'].value )
   end
 
   def hotel?(hotel_link, hotel_name)
@@ -489,6 +520,109 @@ class AirportInfoScraper
 
   def number_of_hotels_in(link_element)
     link_element.parent.previous_element.children.first.text.split("").delete_if{|i| i.to_i == 0}.join.to_i
+  end
+
+  def fbo_rows(row)
+    fbo_entries = [].tap do |collector|
+      while true
+        if is_this_an_fbo?(row)
+          collector << row
+          row = row.next_element
+        elsif end_of_fbo_list?(row)
+          break
+        else
+          if row == nil
+            break
+          else
+            row = row.next_element
+          end
+        end
+      end
+    end
+  end
+
+  def is_this_an_fbo?(current_row)
+    begin
+      fbo_name(current_row)
+    rescue
+      false
+    end
+  end
+
+  def fbo_name(current_row)
+    if current_row.children[1].children.text.strip.delete("\xC2\xA0") == ""
+      name = current_row.children[1].children.last.children.first.attributes['alt'].value
+    else
+      current_row.children[1].children.text.strip.delete("\xC2\xA0")
+    end
+  end
+
+  def fbo_comms(current_row)
+    return_hash = Hash.new { |hash, key| hash[key] = [ ] }
+
+    return_hash.tap do |info_hash|
+      contact_info = current_row.children[5].children.css('font').children.each do |item|
+        if fbo_email?(item)
+          info_hash[ :email ] = fbo_email(item)
+        elsif fbo_website?(item)
+          info_hash[ :link ] = fbo_link(item)
+        elsif fbo_radio?(item)
+          info_hash[ :radio ] = item.text
+        else
+          info_hash[ :other ] << item.text unless ["","[","]","\n\n","\n"].include?(item.text)
+        end
+      end
+    end
+  end
+
+  def website_or_email?(item)
+    item.text == "web site" || item.text == "email"
+  end
+
+  def fbo_email?(item)
+    item.text == "email"
+  end
+
+  def fbo_website?(item)
+    item.text == "web site"
+  end
+
+  def fbo_radio?(item)
+    /\d\d\d.\d\d$/.match(item.text)
+  end
+
+  def fbo_link(item)
+    link_prefixer( item.attributes['href'].value )
+  end
+
+  def fbo_email(item)
+    item.attributes['href'].value.split("?")[0].split(":")[1]
+  end
+
+  def fbo_fuel(current_row)
+    fuel_rows = current_row.children[13].children[1].children
+    {}.tap do |info_hash|
+      prices = fuel_prices( fuel_rows[2] )
+      fuel_types( fuel_rows[1] ).each.with_index do |type, idx|
+        info_hash[ type ] = prices[ idx ]
+      end
+    end
+  end
+
+  def fuel_types(row)
+    row.css('td').map{|td| td.children.text}.delete_if{|text| text == ""}
+  end
+
+  def fuel_prices(row)
+    row.css('td').map{|td| td.children.text}.delete_if{|text| text[0] != "$"}
+  end
+
+  def end_of_fbo_list?(row)
+    begin
+      row.css('td a img').first.attributes['alt'].text == "Update Fuel Prices"
+    rescue
+      false
+    end
   end
 
   def sunrise_sunset_content(info)
@@ -517,7 +651,7 @@ class AirportInfoScraper
 
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kpne")
+scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kdxr")
 # p scraper.latitude_longitude
 # p scraper.vfr_map
 # p scraper.airport_diagram
@@ -541,11 +675,12 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kpne")
 # p scraper.instrument_procedures
 # p scraper.nearby_airports_with_instrument_approaches
 # p scraper.other_pages
-p scraper.where_to_stay
+# p scraper.where_to_stay
 # p scraper.hotel?("http://www.airnav.com/reserve/hotel?in=CHERRY+HILL,NJ,US&near=KPNE", "Cherry Hill, NJ")
- 
-# p scraper.
+# p scraper.aviation_businesses
+p scraper.fixed_base_operators
 
+# http://www.airnav.com/airport/KDXR
 # scraper2 = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
 # p scraper2.latitude_longitude
 
