@@ -11,6 +11,10 @@ class AirportInfoScraper
     @doc = Nokogiri::HTML(html)
   end
 
+  def airport_identifier
+    
+  end
+
   def location
     location_info = table_selector("'Location'").css('tr')[1..-1]
 
@@ -380,7 +384,10 @@ class AirportInfoScraper
   end
 
   def notam
-    doc.search("[text()*='NOTAMs']")[2].parent.attributes['href'].content
+    # FIXING FOR CZPC
+    "https://pilotweb.nas.faa.gov/PilotWeb/notamRetrievalByICAOAction.do?method=displayByICAOs&reportType=RAW&formatType=DOMESTIC&retrieveLocId=" + + "&actionType=notamRetrievalByICAOs"
+    # doc.search("[text()*='NOTAMs']").children
+    # WORKS FOR PNE, KBSO, KDXR? doc.search("[text()*='NOTAMs']")[2].parent.attributes['href'].content
   end
 
   # Helper Methods
@@ -695,7 +702,7 @@ class AirportInfoScraper
 
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/Kpne")
+scraper = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
 # p scraper.vfr_map
 # p scraper.airport_diagram
 # p scraper.airport_diagram_pdf_link
@@ -703,7 +710,7 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/Kpne")
 # p scraper.current_date_and_time
 # p scraper.metar
 # p scraper.taf
-# p scraper.notam
+p scraper.notam
 # p scraper.location
 # p scraper.airport_operations
 # p scraper.airport_comms
