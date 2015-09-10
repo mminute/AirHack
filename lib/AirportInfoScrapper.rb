@@ -179,14 +179,18 @@ class AirportInfoScraper
   end
 
   def additional_remarks
-    remarks_rows = table_selector("'Additional Remarks'").children[1..-2]
+    begin
+      remarks_rows = table_selector("'Additional Remarks'").children[1..-2]
 
-    [].tap do |collector|
-      remarks_rows.each do |row|
-        if row.children.count > 0
-          collector << info_value(row)
+      [].tap do |collector|
+        remarks_rows.each do |row|
+          if row.children.count > 0
+            collector << info_value(row)
+          end
         end
       end
+    rescue
+      nil
     end
   end
 
@@ -692,7 +696,11 @@ class AirportInfoScraper
   end
 
   def table_selector(search)
-    first_result(search).next_element
+    begin
+      first_result(search).next_element
+    rescue
+      nil
+    end
   end
 
   def first_business_entry(search)
