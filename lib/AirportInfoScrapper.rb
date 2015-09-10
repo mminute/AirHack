@@ -7,12 +7,13 @@ class AirportInfoScraper
   attr_reader :doc
 
   def initialize(airport_url)
-    html = open(airport_url).read
+    @url = airport_url
+    html = open(@url).read
     @doc = Nokogiri::HTML(html)
   end
 
   def airport_identifier
-    
+    @url[-4..-1]
   end
 
   def location
@@ -383,11 +384,8 @@ class AirportInfoScraper
     create_info_hash(taf_data_rows, &hash_contents_processor)
   end
 
-  def notam
-    # FIXING FOR CZPC
-    "https://pilotweb.nas.faa.gov/PilotWeb/notamRetrievalByICAOAction.do?method=displayByICAOs&reportType=RAW&formatType=DOMESTIC&retrieveLocId=" + + "&actionType=notamRetrievalByICAOs"
-    # doc.search("[text()*='NOTAMs']").children
-    # WORKS FOR PNE, KBSO, KDXR? doc.search("[text()*='NOTAMs']")[2].parent.attributes['href'].content
+  def notam_link
+    "https://pilotweb.nas.faa.gov/PilotWeb/notamRetrievalByICAOAction.do?method=displayByICAOs&reportType=RAW&formatType=DOMESTIC&retrieveLocId=" + airport_identifier + "&actionType=notamRetrievalByICAOs"
   end
 
   # Helper Methods
@@ -702,7 +700,7 @@ class AirportInfoScraper
 
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
+scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kpne")
 # p scraper.vfr_map
 # p scraper.airport_diagram
 # p scraper.airport_diagram_pdf_link
@@ -710,7 +708,7 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
 # p scraper.current_date_and_time
 # p scraper.metar
 # p scraper.taf
-p scraper.notam
+p scraper.notam_link
 # p scraper.location
 # p scraper.airport_operations
 # p scraper.airport_comms
@@ -730,6 +728,7 @@ p scraper.notam
 # p scraper.aviation_businesses
 # p scraper.fixed_base_operators
 # p scraper.aerial_photo
+# p scraper.airport_identifier
 
 # Test Airports
 # http://www.airnav.com/airport/KDXR
