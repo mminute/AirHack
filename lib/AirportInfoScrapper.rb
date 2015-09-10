@@ -724,9 +724,7 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/Kpne")
 # p scraper.fixed_base_operators
 # p scraper.aerial_photo
 
+# Test Airports
 # http://www.airnav.com/airport/KDXR
-# scraper2 = AirportInfoScraper.new("http://www.airnav.com/airport/CZPC")
-# p scraper2.latitude_longitude
-
-# "http://www.airnav.com/airport/KBOS"
-# Airport w/o sectional map, airport diagram "http://www.airnav.com/airport/CZPC"
+# http://www.airnav.com/airport/CZPC
+# http://www.airnav.com/airport/KBOS
