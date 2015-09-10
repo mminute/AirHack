@@ -424,7 +424,12 @@ class AirportInfoScraper
                 end
       entries.delete_if{|item| item == ""}
     else
-      row.children[1].children.first.content
+      begin
+        row.children[1].children.first.content
+      rescue
+        nil
+      end
+      
     end
   end
 
@@ -498,7 +503,11 @@ class AirportInfoScraper
   end
 
   def instrument_approach_link(row)
-    row.children[1..-1].children[2].attributes['href'].value[8..-1]
+    begin
+      row.children[1..-1].children.css('a').first.attributes['href'].value[8..-1]
+    rescue
+      nil
+    end
   end
 
   def instrument_procedures_warning_text(procedures_section)
@@ -700,35 +709,59 @@ class AirportInfoScraper
 
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kpne")
-# p scraper.vfr_map
-# p scraper.airport_diagram
-# p scraper.airport_diagram_pdf_link
-# p scraper.sunrise_sunset
-# p scraper.current_date_and_time
-# p scraper.metar
-# p scraper.taf
+scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kdxr")
+puts "VFR MAP"
+p scraper.vfr_map
+puts "AIRPORT DIAGRAM"
+p scraper.airport_diagram
+puts "DIAGRAM LINK"
+p scraper.airport_diagram_pdf_link
+puts "SUNRISE AND SUNSET"
+p scraper.sunrise_sunset
+puts "CURRENT DATE AND TIME"
+p scraper.current_date_and_time
+puts "METAR"
+p scraper.metar
+puts "TAF"
+p scraper.taf
+puts "NOTAM LINK"
 p scraper.notam_link
-# p scraper.location
-# p scraper.airport_operations
-# p scraper.airport_comms
-# p scraper.table_selector("'Airport Communications'")
-# p scraper.vor
-# p scraper.non_directional_beacon
-# p scraper.airport_services
-# p scraper.runway_info
-# p scraper.airport_ownership
-# p scraper.airport_ops_stats
-# p scraper.additional_remarks
-# p scraper.instrument_procedures
-# p scraper.nearby_airports_with_instrument_approaches
-# p scraper.other_pages
-# p scraper.where_to_stay
-# p scraper.hotel?("http://www.airnav.com/reserve/hotel?in=CHERRY+HILL,NJ,US&near=KPNE", "Cherry Hill, NJ")
-# p scraper.aviation_businesses
-# p scraper.fixed_base_operators
-# p scraper.aerial_photo
-# p scraper.airport_identifier
+puts "LOCATION"
+p scraper.location
+puts "AIRPORT OPERATIONS"
+p scraper.airport_operations
+puts "AIRPORT COMMUNICATIONS"
+p scraper.airport_comms
+puts "VOR"
+p scraper.vor
+puts "NON DIRECTIONAL BEACON"
+p scraper.non_directional_beacon
+puts "AIRPORT SERVICES"
+p scraper.airport_services
+puts "RUNWAY INFO"
+p scraper.runway_info
+puts "AIRPORT OWNERSHIP"
+p scraper.airport_ownership
+puts "AIRPORT OPS STATS"
+p scraper.airport_ops_stats
+puts "ADDITIONAL REMARKS"
+p scraper.additional_remarks
+puts "INSTRUMENT PROCEDURES"
+p scraper.instrument_procedures
+puts "NEARBY WITH IA"
+p scraper.nearby_airports_with_instrument_approaches
+puts "OTHER PAGES"
+p scraper.other_pages
+puts "WHERE TO STAY"
+p scraper.where_to_stay
+puts "AVIATION BUSINESSES"
+p scraper.aviation_businesses
+puts "FBO's"
+p scraper.fixed_base_operators
+puts "AERIAL PHOTO"
+p scraper.aerial_photo
+puts "AIRPORT IDENTIFIER"
+p scraper.airport_identifier
 
 # Test Airports
 # http://www.airnav.com/airport/KDXR
