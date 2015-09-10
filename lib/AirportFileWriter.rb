@@ -4,13 +4,11 @@ require_relative 'AirportInfoScrapper'
 class AirportFileWriter
   attr_reader :url, :scraper
 
- # InfoGrabberMethods = [:vfr_map, :airport_diagram, :airport_diagram_pdf_link,
- # :sunrise_sunset, :current_date_and_time, :metar, :taf, :notam_link,
- # :location, :airport_operations, :airport_comms, :vor, :non_directional_beacon, :airport_services,
- # :runway_info, :airport_ownership, :airport_ops_stats, :additional_remarks, :instrument_procedures, :nearby_airports_with_instrument_approaches,
- # :other_pages, :where_to_stay, :aviation_businesses, :fixed_base_operators, :aerial_photo ]
-
- InfoGrabberMethods = [:testing]
+ InfoGrabberMethods = [:vfr_map, :airport_diagram, :airport_diagram_pdf_link,
+ :sunrise_sunset, :current_date_and_time, :metar, :taf, :notam_link,
+ :location, :airport_operations, :airport_comms, :vor, :non_directional_beacon, :airport_services,
+ :runway_info, :airport_ownership, :airport_ops_stats, :additional_remarks, :instrument_procedures, :nearby_airports_with_instrument_approaches,
+ :other_pages, :where_to_stay, :aviation_businesses, :fixed_base_operators, :aerial_photo ]
 
   def initialize(scraper)
     @scraper = scraper
@@ -24,10 +22,19 @@ class AirportFileWriter
     airport_file = File.open(full_name, "w")
 
     InfoGrabberMethods.each do |method|
-      airport_file.puts scraper.send(method)
+      rescuer(method, airport_file)
     end
     
     airport_file.close
+  end
+
+  def rescuer(method, airport_file)
+    result =  begin
+                scraper.send(method)
+              rescue
+                nil
+              end
+    airport_file.puts result
   end
 
 end

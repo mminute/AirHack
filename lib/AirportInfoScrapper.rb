@@ -16,10 +16,6 @@ class AirportInfoScraper
     @doc = Nokogiri::HTML(html)
   end
 
-  # def testing
-  #   "hi!"
-  # end
-
   def airport_identifier
     url[-4..-1]
   end
@@ -51,75 +47,58 @@ class AirportInfoScraper
   end
 
   def airport_comms
-    begin
-      comms_info_table = table_selector("'Airport Communications'")
-      comms_info_rows  = comms_info_table.children[1..-2]
+    comms_info_table = table_selector("'Airport Communications'")
+    comms_info_rows  = comms_info_table.children[1..-2]
 
-      hash_contents_processor = Proc.new do |row,info_hash|
-                            if row.children.first
-                              info_hash[info_key(row)] = info_value(row)
-                            end
+    hash_contents_processor = Proc.new do |row,info_hash|
+                          if row.children.first
+                            info_hash[info_key(row)] = info_value(row)
                           end
-      comms_info = create_info_hash(comms_info_rows, &hash_contents_processor)
+                        end
+    comms_info = create_info_hash(comms_info_rows, &hash_contents_processor)
 
-      if comms_info_table.next_element.name == "ul"
-        comms_info['Notes'] = [].tap do |all_notes|
-          comms_info_table.next_element.children.css('li').each do |item|
-            all_notes << item.children.first.content.gsub("\n", "")
-          end
+    if comms_info_table.next_element.name == "ul"
+      comms_info['Notes'] = [].tap do |all_notes|
+        comms_info_table.next_element.children.css('li').each do |item|
+          all_notes << item.children.first.content.gsub("\n", "")
         end
-        comms_info
       end
-
-    rescue
-      nil
+      comms_info
     end
   end
 
   def vor
-    begin
-      vor_data_rows = table_selector("'Nearby radio navigation aids'").children[2..-2]
+    vor_data_rows = table_selector("'Nearby radio navigation aids'").children[2..-2]
 
-      hash_contents_processor = Proc.new do |row,info_hash|
-                              if row.children.count > 0
-                                info_hash[vor_key(row)] = vor_value(row)
-                              end
+    hash_contents_processor = Proc.new do |row,info_hash|
+                            if row.children.count > 0
+                              info_hash[vor_key(row)] = vor_value(row)
                             end
-      create_info_hash(vor_data_rows, &hash_contents_processor)
-    rescue
-      nil
-    end
+                          end
+    create_info_hash(vor_data_rows, &hash_contents_processor)
   end
 
   def non_directional_beacon
-    begin
-      ndb_rows = first_result_parent("'NDB'").parent.children[3..-2]
+    ndb_rows = first_result_parent("'NDB'").parent.children[3..-2]
 
-      hash_contents_processor = Proc.new do |row,info_hash|
-                                if row.children.count > 0
-                                  info_hash[non_directional_beacon_name(row)] = non_directional_beacon_value(row)
-                                end
+    hash_contents_processor = Proc.new do |row,info_hash|
+                              if row.children.count > 0
+                                info_hash[non_directional_beacon_name(row)] = non_directional_beacon_value(row)
                               end
+                            end
 
-      create_info_hash(ndb_rows, &hash_contents_processor)
-    rescue
-      nil
-    end
+    create_info_hash(ndb_rows, &hash_contents_processor)
   end
 
   def airport_services
-    begin
-      services_rows = table_selector("'Airport Services'").children[1..-2]
+    services_rows = table_selector("'Airport Services'").children[1..-2]
 
-      hash_contents_processor = Proc.new do |row,info_hash|
-                      if row.children.count > 0
-                        info_hash[info_key(row)] = info_value(row)
-                      end
+    hash_contents_processor = Proc.new do |row,info_hash|
+                    if row.children.count > 0
+                      info_hash[info_key(row)] = info_value(row)
                     end
-      create_info_hash(services_rows, &hash_contents_processor)
-    rescue
-      nil
-    end
+                  end
+    create_info_hash(services_rows, &hash_contents_processor)
   end
 
   def runway_info
@@ -158,68 +137,60 @@ class AirportInfoScraper
   end
 
   def airport_ops_stats
-    begin
-      table_data = table_selector("'Airport Operational Statistics'").css('td tr td')
-      clean_data = table_data.children.map{|datum| datum.content}.delete_if{|item| /^\xC2\xA0$|\*/.match(item) }
-      time_period = table_data.css('font').children.last.content
+    table_data = table_selector("'Airport Operational Statistics'").css('td tr td')
+    clean_data = table_data.children.map{|datum| datum.content}.delete_if{|item| /^\xC2\xA0$|\*/.match(item) }
+    time_period = table_data.css('font').children.last.content
 
-      {}.tap do |info_hash|
-        i=0
-        while i <= clean_data[0..-2].count-1
-          if /Aircraft operations/.match(clean_data[i])
-            split_entry = clean_data[i].split(": ")
-            info_hash[ split_entry[0]+":" ] = split_entry[1]
-            i+=1
+    {}.tap do |info_hash|
+      i=0
+      while i <= clean_data[0..-2].count-1
+        if /Aircraft operations/.match(clean_data[i])
+          split_entry = clean_data[i].split(": ")
+          info_hash[ split_entry[0]+":" ] = split_entry[1]
+          i+=1
+        else
+          if clean_data[i][0..-1].to_i > 0
+            info_hash[ clean_data[i+1] ] = clean_data[i]
           else
-            if clean_data[i][0..-1].to_i > 0
-              info_hash[ clean_data[i+1] ] = clean_data[i]
-            else
-              info_hash[ clean_data[i] ] = clean_data[i+1]
-            end
-            i+=2
+            info_hash[ clean_data[i] ] = clean_data[i+1]
           end
+          i+=2
         end
-        info_hash["Time Period"] = time_period
       end
-    rescue
-      nil
+      info_hash["Time Period"] = time_period
     end
   end
 
   def additional_remarks
-    begin
-      remarks_rows = table_selector("'Additional Remarks'").children[1..-2]
+    remarks_rows = table_selector("'Additional Remarks'").children[1..-2]
 
-      [].tap do |collector|
-        remarks_rows.each do |row|
-          if row.children.count > 0
-            collector << info_value(row)
-          end
+    [].tap do |collector|
+      remarks_rows.each do |row|
+        if row.children.count > 0
+          collector << info_value(row)
         end
       end
-    rescue
-      nil
     end
   end
 
   def instrument_procedures
-    procedures_section = table_selector("'Instrument Procedures'")
-    procedures_rows = procedures_section.next_element.css('tr')
+      procedures_section = table_selector("'Instrument Procedures'")
+      procedures_rows = procedures_section.next_element.css('tr')
 
-    {}.tap do |info_hash|
-      section_title = nil
-      procedures_rows.each do |row|
-        if row.children.first.name == 'th'
-          section_title = row.children.first.children.last.content
-          info_hash[ section_title ] = {}
-        else
-          info_hash[ section_title ][ instrument_approach_name(row) ] = instrument_approach_link(row)
+      {}.tap do |info_hash|
+        section_title = nil
+        procedures_rows.each do |row|
+          if row.children.first.name == 'th'
+            section_title = row.children.first.children.last.content
+            info_hash[ section_title ] = {}
+          else
+            info_hash[ section_title ][ instrument_approach_name(row) ] = instrument_approach_link(row)
+          end
+        end
+        if info_hash.keys.count > 0
+          info_hash[ :warning ] = instrument_procedures_warning_text(procedures_section)
         end
       end
-      if info_hash.keys.count > 0
-        info_hash[ :warning ] = instrument_procedures_warning_text(procedures_section)
-      end
-    end
   end
 
   def nearby_airports_with_instrument_approaches
@@ -312,39 +283,23 @@ class AirportInfoScraper
   end
 
   def vfr_map
-    begin
-      doc.search("[text()*='Sectional chart']")[1].parent.parent.css("img").first.attributes['src'].value
-    rescue
-      nil
-    end
+    doc.search("[text()*='Sectional chart']")[1].parent.parent.css("img").first.attributes['src'].value
   end
 
   def airport_diagram
-    begin
-      table_selector("'CAUTION: Diagram may not be current'").next_element.attributes['src'].value[2..-1]
-    rescue
-      nil
-    end
+    table_selector("'CAUTION: Diagram may not be current'").next_element.attributes['src'].value[2..-1]
   end
 
   def airport_diagram_pdf_link
-    begin
-      first_result("'Download PDF'")['href']
-    rescue
-      nil
-    end
+    first_result("'Download PDF'")['href']
   end
 
   def aerial_photo
-    begin
-      image = first_result_parent("'Aerial photo'").next_element.css('img').first.attributes['src'].value
-      if image.include?("no-airport-photo")
-        nil
-      else
-        image
-      end
-    rescue
+    image = first_result_parent("'Aerial photo'").next_element.css('img').first.attributes['src'].value
+    if image.include?("no-airport-photo")
       nil
+    else
+      image
     end
   end
 
@@ -553,11 +508,19 @@ class AirportInfoScraper
   end
 
   def hotel_distance(link_element)
-    link_element.parent.next_element.next_element.css('font').children.first.text.delete("\xC2\xA0").to_f
+    begin
+      link_element.parent.next_element.next_element.css('font').children.first.text.delete("\xC2\xA0").to_f
+    rescue
+      nil
+    end
   end
 
   def hotel_price_for(link_element)
-    link_element.parent.next_element.next_element.next_element.children.first.children.text
+    begin
+      link_element.parent.next_element.next_element.next_element.children.first.children.text
+    rescue
+      nil
+    end
   end
 
   def number_of_hotels_in(link_element)
@@ -813,12 +776,3 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kpne")
 # a = LinksFromHash.new(AllAirportUrls)
 # a.grab_links
 # airport_urls = a.all_links # 4974 airport urls in an Array
-
-
-
-
-
-# puts Dir["./lib/airport_files/*"] # Return an array of all the files in a directory
-
-# class AirportFileMaker
-# end

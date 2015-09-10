@@ -21,9 +21,11 @@ class AirportBatchFileCreator
 end
 
 
-url_array = LinksFromHash.new(AllAirportUrls)
-url_array.grab_links
-links = url_array.all_links
+# url_array = LinksFromHash.new(AllAirportUrls)
+# url_array.grab_links
+# links = url_array.all_links
+
+links = ["http://www.airnav.com/airport/CZPC"]
 
 batch_creator = AirportBatchFileCreator.new(links)
 batch_creator.batch_create
