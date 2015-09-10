@@ -3,9 +3,9 @@ require 'nokogiri'
 require 'open-uri'
 require 'pry'
 
-require_relative 'AirportURLS'
-require_relative 'LinksFromHash'
-# require_relative 'AirportFileWriter'
+# require_relative 'AirportURLS'
+# require_relative 'LinksFromHash'
+# # require_relative 'AirportFileWriter'
 
 class AirportInfoScraper
   attr_reader :doc, :url
@@ -15,6 +15,10 @@ class AirportInfoScraper
     html = open(@url).read
     @doc = Nokogiri::HTML(html)
   end
+
+  # def testing
+  #   "hi!"
+  # end
 
   def airport_identifier
     url[-4..-1]
