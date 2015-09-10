@@ -80,7 +80,7 @@ class AirportInfoScraper
 
   def non_directional_beacon
     begin
-      ndb_rows = doc.search("[text()*='NDB']").first.parent.parent.children[3..-2]
+      ndb_rows = first_result_parent("'NDB'").parent.children[3..-2]
 
       hash_contents_processor = Proc.new do |row,info_hash|
                                 if row.children.count > 0
@@ -110,7 +110,7 @@ class AirportInfoScraper
   end
 
   def runway_info
-    runway_name_element = doc.search("[text()*='Runway Information']").first.next_element
+    runway_name_element = first_result("'Runway Information'").next_element
     found_runway = true
 
     {}.tap do |runway_collector|
@@ -261,47 +261,36 @@ class AirportInfoScraper
   end
 
   def aviation_businesses
-    begin
-      first_row = first_business_entry("'Aviation Businesses'")
-
-      terminator = Proc.new do |row|
-        end_of_av_biz_list?(row)
-      end
-
-      av_biz_entries = airport_biz_rows(first_row, &terminator)
-
-      hash_contents_processor = Proc.new do |row,info_hash|
-          info_hash[ airport_biz_name(row) ] = { contact_info: airport_biz_comms(row), description: airport_biz_description(row), distance: distance_to_biz(row) }
-      end
-
-      create_info_hash(av_biz_entries, &hash_contents_processor)
-    rescue
-      nil
+    terminator = Proc.new do |row|
+      end_of_av_biz_list?(row)
     end
+
+    hash_contents_processor = Proc.new do |row,info_hash|
+        info_hash[ airport_biz_name(row) ] = { contact_info: airport_biz_comms(row), description: airport_biz_description(row), distance: distance_to_biz(row) }
+    end
+
+    airport_businesses("'Aviation Businesses'", terminator, hash_contents_processor)
   end
 
   def fixed_base_operators
-    begin
-      first_row = first_business_entry("'FBO, Fuel Providers, and Aircraft Ground Support'")
-
-      terminator = Proc.new do |row|
-        end_of_fbo_list?(row)
-      end
-
-      fbo_entries = airport_biz_rows(first_row, &terminator)
-
-      hash_contents_processor = Proc.new do |row,info_hash|
-          info_hash[ airport_biz_name(row) ] = { contact_info: airport_biz_comms(row), fuel: fbo_fuel(row) }
-      end
-      create_info_hash(fbo_entries, &hash_contents_processor)
-    rescue
-      nil
+    terminator = Proc.new do |row|
+      end_of_fbo_list?(row)
     end
+
+    hash_contents_processor = Proc.new do |row,info_hash|
+        info_hash[ airport_biz_name(row) ] = { contact_info: airport_biz_comms(row), fuel: fbo_fuel(row) }
+    end
+
+    airport_businesses("'FBO, Fuel Providers, and Aircraft Ground Support'", terminator, hash_contents_processor)
   end
 
-  def airport_business(search_term)
-    if search_term == "'FBO, Fuel Providers, and Aircraft Ground Support'"
-    elsif search_term == "'Aviation Businesses'"
+  def airport_businesses(search_term, terminator, hash_contents_processor)
+    begin
+      first_row = first_business_entry( search_term )
+      biz_entries = airport_biz_rows(first_row, &terminator)
+      create_info_hash(biz_entries, &hash_contents_processor)
+    rescue
+      nil
     end
   end
 
@@ -323,7 +312,7 @@ class AirportInfoScraper
 
   def airport_diagram_pdf_link
     begin
-      doc.search("[text()*='Download PDF']").first['href']
+      first_result("'Download PDF'")['href']
     rescue
       nil
     end
@@ -331,7 +320,7 @@ class AirportInfoScraper
 
   def aerial_photo
     begin
-      image = doc.search("[text()*='Aerial photo']").first.parent.next_element.css('img').first.attributes['src'].value
+      image = first_result_parent("'Aerial photo'").next_element.css('img').first.attributes['src'].value
       if image.include?("no-airport-photo")
         nil
       else
@@ -343,7 +332,7 @@ class AirportInfoScraper
   end
 
   def sunrise_sunset
-    sunset_sunrise_data = doc.search("[text()*='Morning civil twilight']").first.parent.parent
+    sunset_sunrise_data = first_result_parent("'Morning civil twilight'").parent
 
     morning_civil_twilight = sunset_sunrise_data.children
                    sunrise = sunset_sunrise_data.next_element.children
@@ -364,7 +353,7 @@ class AirportInfoScraper
   end
 
   def current_date_and_time
-    date_and_time_data = doc.search("[text()*='Current date and time']").first.parent.next_element.children.first.children[1]
+    date_and_time_data = first_result_parent("'Current date and time'").next_element.children.first.children[1]
     local_timezone = date_and_time_data.children[3].children.first.children.first.children.first.content[0..-3]
 
     {
@@ -374,7 +363,7 @@ class AirportInfoScraper
   end
 
   def metar
-    metar_data_rows = doc.search("[text()*='METAR']").first.parent.parent.css('tr')[2..-1]
+    metar_data_rows = first_result_parent("'METAR'").parent.css('tr')[2..-1]
     hash_contents_processor = Proc.new{|row,info_hash| info_hash[metar_airport(row)] = metar_content(row) }
     create_info_hash(metar_data_rows, &hash_contents_processor)
   end
@@ -631,7 +620,7 @@ class AirportInfoScraper
   end
 
   def fbo_radio?(item)
-    /\d\d\d.\d\d$/.match(item.text)
+    /\d\d\d\.\d\d$/.match(item.text)
   end
 
   def fbo_link(item)
@@ -689,17 +678,24 @@ class AirportInfoScraper
   end
 
   def table_selector(search)
-    doc.search("[text()*=#{search}]").first.next_element
+    first_result(search).next_element
   end
 
   def first_business_entry(search)
-    doc.search("[text()*=#{search}]").first.parent.parent.next_element.next_element
+    first_result_parent(search).parent.next_element.next_element
+  end
+
+  def first_result(search)
+    doc.search("[text()*=#{search}]").first
+  end
+
+  def first_result_parent(search)
+    doc.search("[text()*=#{search}]").first.parent
   end
 
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kdxr")
-# p scraper.latitude_longitude
+scraper = AirportInfoScraper.new("http://www.airnav.com/airport/Kpne")
 # p scraper.vfr_map
 # p scraper.airport_diagram
 # p scraper.airport_diagram_pdf_link
@@ -724,7 +720,7 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kdxr")
 # p scraper.other_pages
 # p scraper.where_to_stay
 # p scraper.hotel?("http://www.airnav.com/reserve/hotel?in=CHERRY+HILL,NJ,US&near=KPNE", "Cherry Hill, NJ")
-p scraper.aviation_businesses
+# p scraper.aviation_businesses
 # p scraper.fixed_base_operators
 # p scraper.aerial_photo
 
