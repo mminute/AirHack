@@ -1,3 +1,4 @@
+AllAirportUrls =
 {
   "as"=>["http://www.airnav.com/airport/NSFQ", "http://www.airnav.com/airport/NSAS", "http://www.airnav.com/airport/NSTU"],
   "ai"=>["http://www.airnav.com/airport/TQPF"],
