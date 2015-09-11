@@ -35,22 +35,6 @@ class AirportInfoScraper
     end
   end
 
-  def value_not_nil_or_empty_structure(value)
-    if value != nil
-      if value.is_a?( Array ) || value.is_a?( Hash )
-        if !value.empty?
-          true
-        else
-          false
-        end
-      else
-        true
-      end
-    else
-      false
-    end
-  end
-
   def airport_identifier
     url[-4..-1]
   end
@@ -726,6 +710,18 @@ class AirportInfoScraper
       send( method_symbol )
     rescue
       nil
+    end
+  end
+
+  def value_not_nil_or_empty_structure(value)
+    if value != nil
+      if value.is_a?( Array ) || value.is_a?( Hash )
+        !value.empty?
+      else
+        true
+      end
+    else
+      false
     end
   end
 

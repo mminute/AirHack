@@ -28,6 +28,6 @@ class AirportFileWriter
 end
 
 
-# some_airport =  AirportInfoScraper.new("http://www.airnav.com/airport/kdxr")
-# info_writer = AirportFileWriter.new(some_airport)
-# info_writer.write_new_file
+some_airport =  AirportInfoScraper.new("http://www.airnav.com/airport/czpc")
+info_writer = AirportFileWriter.new(some_airport)
+info_writer.write_new_file
