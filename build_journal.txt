@@ -1,0 +1,32 @@
+<2015-09-11>
+
+  The class designed to scrape the airnav airport pages (AirportInfoScrapper) is complete, though many pages run into issues and limited info can be obtained from them.  I suspect this is due to inconsistencies in the page structure from airport to airport.  This seems odd as I would expect the pages to have the info rendered in a standard format from info in a database.  These inconsistencies neccesitated the use of a rescue claus to account not only for when information was not present on a page but also when that info was not in the expected html element (see AirportFileWriter).  All assumptions about the html structure where based on the page for KPNE- Northeast Philadelphia Regional Airport.
+
+  Another class designed to write the info acquired from the scrapper to a file, AirportFileWriter, is also complete.  This class takes in a AirportInfoScrapper object and call all the relevant methods on it as well as providing a rescue class for when these methods run into errors. The acquire info is written to a file using the aiport identifier as the name with a ".txt" extension.
+
+  A third class, AirportBatchFileWriter, is complete.  This class takes in an array of urls and for each url creates a AirportInfoScrapper object, AirportFileWriter, and call the method to write the info to a new file.
+
+  Supporting Classes--
+  AirportLinkGetter
+  Opens the index page for the countries in which there are airports in the database. It then collects the urls of each airport or state dependeing on whether the country page list one or the other.  If the page lists states/provinces the class will go to each state/province page and collect the urls of each airport listed there.
+
+  LinksFromHash
+  This class takes a hash of airports organized into their respective countries and states and collects all the urls for the airports.  This is used to pass in the locally saved urls produced from the AirportLinkGetter class and placed into the AirportURLS.rb file.
+
+  AirportFilePresenceVerifier
+  This class compares a list of all the files present in a directory (airport_files), against the anticipated number of files and returns an array of the urls that do not have a correspnding file.  When I ran the AirportBatchFileCreator last night it ran for a time before stalling somewhere along the way.  This morning I found the system hanging, having produced only 1,992 out of an anticipated 4974 files.  This class provided that data.
+
+  I plan to implement some sort of timeout feature to be applied to the scraping of each page, perhaps in the AirportBatchFileWriter class.  This should allow the scrapping process to proceed even when particular pages fail.
+  http://www.whatastruggle.com/timeout-a-subprocess-in-ruby
+
+  Since using Airnav essentially as an API is proving unreliable I will see if the FAA provides an API at least for acquirign location data to use in seeding the database.  I'll see what other data can be more reliably acquired from other API sources though this is somewhat frustrating as the entire purpose of scrapping Airnav was to use it as a one-stop-shop.
+
+  If I can at least get location data for all or most of the airports I should begin building out the rails app and see if i can at least start displaying pins of a google map or maybe mapbox.
+
+  ToDo:
+  - Timeout feature
+  - Find applicable FAA API's/ others?
+  - Start Rails App
+  - Look into Map feature
+<END>
+
