@@ -25,10 +25,18 @@ class TimeOutTester
 
 end
 
-should_awaken = TimeOutTester.new(30,10)
-should_rescue = TimeOutTester.new(2,10)
+# should_awaken = TimeOutTester.new(30,10)
+# should_rescue = TimeOutTester.new(2,10)
 
-puts "This should not be rescued.  You should see 'Awakened!!!'"
-p should_awaken.test
-puts "This should be rescued.  You should see 'Rescued from the long sleep!...'"
-p should_rescue.test
+# puts "This should not be rescued.  You should see 'Awakened!!!'"
+# p should_awaken.test
+# puts "This should be rescued.  You should see 'Rescued from the long sleep!...'"
+# p should_rescue.test
+
+# [1,2,3,4,5].each do |number|
+#   if number < 5
+#     next
+#   else
+#     puts number
+#   end
+# end
