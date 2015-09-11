@@ -26,7 +26,7 @@ class AirportBatchFileCreator
 end
 
 # TESTING HOW LONG 4 PAGES TAKE TO DETERMINE THE LENGTH OF THE TIMEOUT------------
-links = ["http://www.airnav.com/airport/CZPC", "http://www.airnav.com/airport/kdxr", "http://www.airnav.com/airport/kpne", "http://www.airnav.com/airport/kbos"]
+# links = ["http://www.airnav.com/airport/CZPC", "http://www.airnav.com/airport/kdxr", "http://www.airnav.com/airport/kpne", "http://www.airnav.com/airport/kbos"]
 
 # start_time = Time.now
 # batch_creator = AirportBatchFileCreator.new(links)
@@ -41,5 +41,5 @@ links = ["http://www.airnav.com/airport/CZPC", "http://www.airnav.com/airport/kd
 # url_array = LinksFromHash.new(AllAirportUrls)
 # url_array.grab_links
 # links = url_array.all_links
-batch_creator = AirportBatchFileCreator.new(links)
-batch_creator.batch_create
+# batch_creator = AirportBatchFileCreator.new(links)
+# batch_creator.batch_create

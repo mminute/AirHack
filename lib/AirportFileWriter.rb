@@ -20,25 +20,14 @@ class AirportFileWriter
     full_name = path + file_name
 
     airport_file = File.open(full_name, "w")
-
-    InfoGrabberMethods.each do |method|
-      rescuer(method, airport_file)
-    end
-    
-    airport_file.close
-  end
-
-  def rescuer(method, airport_file)
-    result =  begin
-                scraper.send(method)
-              rescue
-              end
+    result = scraper.collect_information
     airport_file.puts result
+    airport_file.close
   end
 
 end
 
 
-some_airport =  AirportInfoScraper.new("http://www.airnav.com/airport/czpc")
-info_writer = AirportFileWriter.new(some_airport)
-info_writer.write_new_file
+# some_airport =  AirportInfoScraper.new("http://www.airnav.com/airport/kdxr")
+# info_writer = AirportFileWriter.new(some_airport)
+# info_writer.write_new_file

@@ -26,12 +26,28 @@ class AirportInfoScraper
     {}.tap do |all_info|
       info_grabber_methods.each do |method_symbol|
         value = rescuer( method_symbol )
-        if value != nil
+        if value_not_nil_or_empty_structure(value)
           all_info[ method_symbol ] = value
         else
           next
         end
       end
+    end
+  end
+
+  def value_not_nil_or_empty_structure(value)
+    if value != nil
+      if value.is_a?( Array ) || value.is_a?( Hash )
+        if !value.empty?
+          true
+        else
+          false
+        end
+      else
+        true
+      end
+    else
+      false
     end
   end
 
@@ -715,60 +731,8 @@ class AirportInfoScraper
 
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/czpc")
-p scraper.collect_information
-# puts "VFR MAP"
-# p scraper.vfr_map
-# puts "AIRPORT DIAGRAM"
-# p scraper.airport_diagram
-# puts "DIAGRAM LINK"
-# p scraper.airport_diagram_pdf_link
-# puts "SUNRISE AND SUNSET"
-# p scraper.sunrise_sunset
-# puts "CURRENT DATE AND TIME"
-# p scraper.current_date_and_time
-# puts "METAR"
-# p scraper.metar
-# puts "TAF"
-# p scraper.taf
-# puts "NOTAM LINK"
-# p scraper.notam_link
-# puts "LOCATION"
-# p scraper.location
-# puts "AIRPORT OPERATIONS"
-# p scraper.airport_operations
-# puts "AIRPORT COMMUNICATIONS"
-# p scraper.airport_comms
-# puts "VOR"
-# p scraper.vor
-# puts "NON DIRECTIONAL BEACON"
-# p scraper.non_directional_beacon
-# puts "AIRPORT SERVICES"
-# p scraper.airport_services
-# puts "RUNWAY INFO"
-# p scraper.runway_info
-# puts "AIRPORT OWNERSHIP"
-# p scraper.airport_ownership
-# puts "AIRPORT OPS STATS"
-# p scraper.airport_ops_stats
-# puts "ADDITIONAL REMARKS"
-# p scraper.additional_remarks
-# puts "INSTRUMENT PROCEDURES"
-# p scraper.instrument_procedures
-# puts "NEARBY WITH IA"
-# p scraper.nearby_airports_with_instrument_approaches
-# puts "OTHER PAGES"
-# p scraper.other_pages
-# puts "WHERE TO STAY"
-# p scraper.where_to_stay
-# puts "AVIATION BUSINESSES"
-# p scraper.aviation_businesses
-# puts "FBO's"
-# p scraper.fixed_base_operators
-# puts "AERIAL PHOTO"
-# p scraper.aerial_photo
-# puts "AIRPORT IDENTIFIER"
-# p scraper.airport_identifier
+# scraper = AirportInfoScraper.new("http://www.airnav.com/airport/czpc")
+# p scraper.collect_information
 
 # Test Airports
 # http://www.airnav.com/airport/KDXR
