@@ -22,10 +22,19 @@ class AirportFileWriter
     airport_file = File.open(full_name, "w")
 
     InfoGrabberMethods.each do |method|
-      airport_file.puts scraper.send(method)
+      rescuer(method, airport_file)
     end
     
     airport_file.close
+  end
+
+  def rescuer(method, airport_file)
+    result =  begin
+                scraper.send(method)
+              rescue
+                nil
+              end
+    airport_file.puts result
   end
 
 end
