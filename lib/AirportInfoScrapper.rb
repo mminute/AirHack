@@ -16,6 +16,25 @@ class AirportInfoScraper
     @doc = Nokogiri::HTML(html)
   end
 
+  def collect_information
+    info_grabber_methods = [:vfr_map, :airport_diagram, :airport_diagram_pdf_link,
+   :sunrise_sunset, :current_date_and_time, :metar, :taf, :notam_link,
+   :location, :airport_operations, :airport_comms, :vor, :non_directional_beacon, :airport_services,
+   :runway_info, :airport_ownership, :airport_ops_stats, :additional_remarks, :instrument_procedures, :nearby_airports_with_instrument_approaches,
+   :other_pages, :where_to_stay, :aviation_businesses, :fixed_base_operators, :aerial_photo ]
+    
+    {}.tap do |all_info|
+      info_grabber_methods.each do |method_symbol|
+        value = rescuer( method_symbol )
+        if value != nil
+          all_info[ method_symbol ] = value
+        else
+          next
+        end
+      end
+    end
+  end
+
   def airport_identifier
     url[-4..-1]
   end
@@ -686,9 +705,18 @@ class AirportInfoScraper
     doc.search("[text()*=#{search}]").first.parent
   end
 
+  def rescuer(method_symbol)
+    begin
+      send( method_symbol )
+    rescue
+      nil
+    end
+  end
+
 end
 
-scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kpne")
+scraper = AirportInfoScraper.new("http://www.airnav.com/airport/czpc")
+p scraper.collect_information
 # puts "VFR MAP"
 # p scraper.vfr_map
 # puts "AIRPORT DIAGRAM"
@@ -746,33 +774,3 @@ scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kpne")
 # http://www.airnav.com/airport/KDXR
 # http://www.airnav.com/airport/CZPC
 # http://www.airnav.com/airport/KBOS
-
-# Testing how long it takes to get all the data from an airport
-# info_grabber_methods = [:vfr_map, :airport_diagram, :airport_diagram_pdf_link,
-#  :sunrise_sunset, :current_date_and_time, :metar, :taf, :notam_link,
-#  :location, :airport_operations, :airport_comms, :vor, :non_directional_beacon, :airport_services,
-#  :runway_info, :airport_ownership, :airport_ops_stats, :additional_remarks, :instrument_procedures, :nearby_airports_with_instrument_approaches,
-#  :other_pages, :where_to_stay, :aviation_businesses, :fixed_base_operators, :aerial_photo ]
-
-#  start_time = Time.now
-#  scraper = AirportInfoScraper.new("http://www.airnav.com/airport/kpne")
-
-#  info_grabber_methods.each do |method|
-#   scraper.send(method)
-#  end
-
-#  end_time = Time.now
-
-#  elapsed_time = end_time - start_time
-
-#  estimated_time = (elapsed_time * 4974)/(60*60)
-
-#  puts "#{ elapsed_time }  seconds"
-#  puts "Estimate #{ estimated_time } hours to complete all airports."
-
-
-
-
-# a = LinksFromHash.new(AllAirportUrls)
-# a.grab_links
-# airport_urls = a.all_links # 4974 airport urls in an Array
