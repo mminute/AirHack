@@ -2,7 +2,7 @@
 
 
 {"Morning Civil Twilight (Local)"=>"06:33", "Morning Civil Twilight (Zulu)"=>"12:33", "Sunrise (Local)"=>"07:06", "Sunrise (Zulu)"=>"13:06", "Sunset (Local)"=>"20:00", "Sunset (Zulu)"=>"02:00", "Evening Civil Twilight (Local)"=>"20:32", "Evening Civil Twilight (Zulu)"=>"02:32"}
-{"Zulu (UTC)"=>"10-Sep-2015 17:46:45", "Local (UTC-6)"=>"10-Sep-2015 11:46:45"}
+{"Zulu (UTC)"=>"10-Sep-2015 17:55:32", "Local (UTC-6)"=>"10-Sep-2015 11:55:32"}
 {"CZPC "=>"101700Z AUTO VRB02KT 9SM CLR 15/06 A3022 RMK SLP236 DENSITY ALT 4400FT", "CWRT "=>"101700Z AUTO 03002KT 14/08 RMK AO1 T01440082"}
 {"CYQL "=>"101138Z 1012/1024 29010KT P6SM FEW200 PROB30 1012/1016 2SM BR FM101600 27006KT P6SM SCT060 BECMG 1020/1022 20008KT RMK FCST BASED ON AUTO OBS. NXT FCST BY 101800Z"}
 https://pilotweb.nas.faa.gov/PilotWeb/notamRetrievalByICAOAction.do?method=displayByICAOs&reportType=RAW&formatType=DOMESTIC&retrieveLocId=CZPC&actionType=notamRetrievalByICAOs
