@@ -1,3 +1,4 @@
+require 'timeout'
 require_relative 'AirportURLS'
 require_relative 'LinksFromHash'
 require_relative 'AirportInfoScrapper'
@@ -11,6 +12,12 @@ class AirportBatchFileCreator
   end
 
   def batch_create
+    existing_files = Dir["./lib/airport_files/*"].map{|txt_file| /[\d\w]+\.txt/.match(txt_file)[0][0..-5].downcase}
+    not_yet_grabbed = urls.select do |url|
+                        ident = /\/[\d\w]+$/.match(url)[0][1..-1].downcase
+                        !existing_files.include?(ident)
+                      end
+
     urls.each do |url|
       begin
         Timeout.timeout( 6 ) do
@@ -18,7 +25,10 @@ class AirportBatchFileCreator
           writer = AirportFileWriter.new(airport)
           writer.write_new_file
         end
+        sleep(3)
       rescue Timeout::Error
+        next
+      rescue
         next
       end
     end
@@ -38,8 +48,15 @@ end
 
 # puts Dir["./lib/airport_files/*"].count # Return an array of all the files in a directory
 
-# url_array = LinksFromHash.new(AllAirportUrls)
-# url_array.grab_links
-# links = url_array.all_links
-# batch_creator = AirportBatchFileCreator.new(links)
+url_array = LinksFromHash.new(AllAirportUrls)
+url_array.grab_links
+links = url_array.all_links
+# links = ["http://www.airnav.com/airport/KBOS","http://www.airnav.com/airport/CZPC","http://www.airnav.com/airport/KDXR","http://www.airnav.com/airport/KPNE","http://www.airnav.com/airport/KPHL"]
+batch_creator = AirportBatchFileCreator.new(links)
+p batch_creator.batch_create
+
+# batch_creator = AirportBatchFileCreator.new(["http://www.google.com"])
 # batch_creator.batch_create
+
+
+# p existing_files = Dir["./lib/airport_files/*"].map{|txt_file| /[\d\w]+\.txt/.match(txt_file)[0][0..-5].downcase}

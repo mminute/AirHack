@@ -3,10 +3,6 @@ require 'nokogiri'
 require 'open-uri'
 require 'pry'
 
-# require_relative 'AirportURLS'
-# require_relative 'LinksFromHash'
-# # require_relative 'AirportFileWriter'
-
 class AirportInfoScraper
   attr_reader :doc, :url
 
