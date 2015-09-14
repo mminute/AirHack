@@ -20,6 +20,18 @@ class AirportFilePresenceVerifier
     end
   end
 
+  def missing_location_data
+    files_found = Dir[ file_path ]
+    [].tap do |no_location|
+      files_found.each do |path_and_file|
+        reader = IO.readlines( path_and_file )[0]
+        if !reader.include?(":location")
+          no_location << path_and_file
+        end
+      end
+    end
+  end
+
   def airport_from_txt(txt_file)
     /[\d\w]+\.txt/.match(txt_file)[0][0..-5]
   end
@@ -43,4 +55,7 @@ links = url_array.all_links
 
 find_the_missing = AirportFilePresenceVerifier.new(links, "./lib/airport_files/*")
 
-p find_the_missing.missing_airports_finder.count
+# p find_the_missing.missing_location_data
+
+# reader = IO.readlines("./lib/airport_files/kpne.txt")
+# puts reader[0].include?(":location")

@@ -34,9 +34,9 @@ class AirportBatchFileCreator
   end
 end
 
-url_array = LinksFromHash.new(AllAirportUrls)
-url_array.grab_links
-links = url_array.all_links
+# url_array = LinksFromHash.new(AllAirportUrls)
+# url_array.grab_links
+# links = url_array.all_links
 
-batch_creator = AirportBatchFileCreator.new(links)
-p batch_creator.batch_create
+# batch_creator = AirportBatchFileCreator.new(links)
+# p batch_creator.batch_create
