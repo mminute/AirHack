@@ -4,12 +4,14 @@ refer to:
 https://github.com/learn-co-students/lectures-and-videos-web-615/blob/master/student-scrape/scrape.rb
 
 
-
-
-
 Airnav urls:
 
 an airport:
 	http://www.airnav.com/airport/KPNE
 by state:
 	https://www.airnav.com/airports/us/AL
+
+How many airport are there?
+a = LinksFromHash.new(AllAirportUrls)
+a.grab_links
+airport_urls = a.all_links # 4974 airport urls in an Array
