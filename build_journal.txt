@@ -30,3 +30,7 @@
   - Look into Map feature
 <END>
 
+
+<2015-09-11>
+
+  Finally done scraping all the airport pages on Airnav.  Not sure how good the data is.  There are probably a bunch that only have a notam_link, which is hardcoded from the airport identifier. Still, I think that there is a bunch of good data in there as well.  I need to verify that each airport at least has location data.  Useless otherwise.  If there are not many without data I can grab it manually.  If there are many I'll have to look into using the FAA api to grab that data.
